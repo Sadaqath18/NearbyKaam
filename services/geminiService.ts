@@ -1,4 +1,3 @@
-
 import { GoogleGenAI, Modality } from "@google/genai";
 import { Job, JobCategory, VoiceSearchFilters } from "../types";
 
@@ -15,11 +14,15 @@ const LANGUAGE_LOCALE: Record<string, string> = {
   ml: "ml-IN",
   or: "or-IN",
   as: "as-IN",
-  ur: "ur-IN",
+  ur: "ur-IN", //Kashmiri fallback uses ur locale
   ne: "ne-IN",
-  ks: "ur-IN", 
-  sd: "ur-IN"  
+  ks: "ur-IN",
+  sd: "ur-IN", //Sindhi fallback
 };
+
+const ai = new GoogleGenAI({
+  apiKey: import.meta.env.VITE_GEMINI_API_KEY,
+});
 
 // State for active AI audio
 let activeAudioSource: AudioBufferSourceNode | null = null;
@@ -27,7 +30,8 @@ let audioContext: AudioContext | null = null;
 
 function getAudioContext() {
   if (!audioContext) {
-    audioContext = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
+    audioContext = new (window.AudioContext ||
+      (window as any).webkitAudioContext)({ sampleRate: 24000 });
   }
   return audioContext;
 }
@@ -46,7 +50,7 @@ export function stopSpeaking() {
  * Encodes a Uint8Array to base64
  */
 function encode(bytes: Uint8Array) {
-  let binary = '';
+  let binary = "";
   const len = bytes.byteLength;
   for (let i = 0; i < len; i++) {
     binary += String.fromCharCode(bytes[i]);
@@ -74,7 +78,7 @@ async function decodeAudioData(
   data: Uint8Array,
   ctx: AudioContext,
   sampleRate: number,
-  numChannels: number,
+  numChannels: number
 ): Promise<AudioBuffer> {
   const dataInt16 = new Int16Array(data.buffer);
   const frameCount = dataInt16.length / numChannels;
@@ -92,9 +96,11 @@ async function decodeAudioData(
 /**
  * Uses Gemini Flash to generate a natural, localized script for a job announcement.
  */
-export async function getJobReadoutText(job: Job, langName: string): Promise<string> {
+export async function getJobReadoutText(
+  job: Job,
+  langName: string
+): Promise<string> {
   try {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const prompt = `
       Create a very natural sounding job announcement for a voice readout in ${langName}.
       This is for a blue-collar worker discovery app called NearbyKaam.
@@ -103,24 +109,33 @@ export async function getJobReadoutText(job: Job, langName: string): Promise<str
       - Role: ${job.jobRole || job.title}
       - Employer: ${job.employerName}
       - Location: ${job.location.address}
-      - Salary: ${job.salaryAmount} per ${job.salaryType}
+      - Salary: ${job.salaryAmount} ${
+      job.salaryType === "MONTH" ? "per month" : "per day"
+    }
+
       - Expiry: ${job.expiryDays} days remaining
       
       Requirements:
       1. Use the target language ${langName} naturally.
       2. Keep it under 25 words.
       3. Start with something friendly like "New job found!"
-      4. Explicitly state: "The role is ${job.jobRole || job.title} at ${job.employerName} in ${job.location.address}."
-      5. Explicitly state the salary: "The salary is ${job.salaryAmount} per ${job.salaryType}."
-      6. Explicitly state the expiry: "This job expires in ${job.expiryDays} days."
+      4. Explicitly state: "The role is ${job.jobRole || job.title} at ${
+      job.employerName
+    } in ${job.location.address}."
+      5. Explicitly state the salary: "The salary is ${job.salaryAmount} per ${
+      job.salaryType
+    }."
+      6. Explicitly state the expiry: "This job expires in ${
+        job.expiryDays
+      } days."
       7. Output ONLY the localized spoken text, nothing else.
     `;
 
     const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
+      model: "gemini-3-flash-preview",
       contents: [{ parts: [{ text: prompt }] }],
     });
-    
+
     return response.text.trim() || `${job.title} at ${job.employerName}`;
   } catch (error) {
     console.error("Failed to generate script", error);
@@ -132,13 +147,15 @@ export async function getJobReadoutText(job: Job, langName: string): Promise<str
  * Integrated speak function that uses Gemini TTS for premium quality,
  * falling back to browser speechSynthesis for offline/errors.
  */
-export async function speakText(text: string, langCode: string = 'en'): Promise<void> {
+export async function speakText(
+  text: string,
+  langCode: string = "en"
+): Promise<void> {
   stopSpeaking();
-  
-  if (localStorage.getItem('nearbykaam_mute') === 'true') return;
+
+  if (localStorage.getItem("nearbykaam_mute") === "true") return;
 
   try {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash-preview-tts",
       contents: [{ parts: [{ text }] }],
@@ -146,18 +163,21 @@ export async function speakText(text: string, langCode: string = 'en'): Promise<
         responseModalities: [Modality.AUDIO],
         speechConfig: {
           voiceConfig: {
-            prebuiltVoiceConfig: { voiceName: 'Kore' }, // Kore is great for clear announcements
+            prebuiltVoiceConfig: { voiceName: "Kore" }, // Kore is great for clear announcements
           },
         },
       },
     });
 
-    const base64Audio = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
-    
+    const base64Audio =
+      response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+
     if (base64Audio) {
       const ctx = getAudioContext();
-      if (ctx.state === 'suspended') await ctx.resume();
-      
+      if (ctx.state !== "running") {
+        await ctx.resume();
+      }
+
       const audioBuffer = await decodeAudioData(
         decode(base64Audio),
         ctx,
@@ -168,7 +188,7 @@ export async function speakText(text: string, langCode: string = 'en'): Promise<
       const source = ctx.createBufferSource();
       source.buffer = audioBuffer;
       source.connect(ctx.destination);
-      
+
       return new Promise((resolve) => {
         source.onended = () => {
           activeAudioSource = null;
@@ -193,11 +213,13 @@ export async function speakText(text: string, langCode: string = 'en'): Promise<
   }
 }
 
-export async function parseJobSearch(query: string, langName: string = 'English'): Promise<VoiceSearchFilters> {
+export async function parseJobSearch(
+  query: string,
+  langName: string = "English"
+): Promise<VoiceSearchFilters> {
   try {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
+      model: "gemini-3-flash-preview",
       contents: [{ parts: [{ text: `User Query: "${query}"` }] }],
       config: {
         systemInstruction: `The user query is in ${langName}. Extract job intent for NearbyKaam.
@@ -205,21 +227,21 @@ export async function parseJobSearch(query: string, langName: string = 'English'
       Return JSON with category, keyword, and a short intentSummary in ${langName}.`,
         responseMimeType: "application/json",
         responseSchema: {
-          type: { type: 'OBJECT' } as any,
+          type: { type: "OBJECT" } as any,
           properties: {
-            category: { type: 'STRING' },
-            keyword: { type: 'STRING' },
-            intentSummary: { type: 'STRING' }
+            category: { type: "STRING" },
+            keyword: { type: "STRING" },
+            intentSummary: { type: "STRING" },
           },
-          required: ["intentSummary"]
-        }
+          required: ["intentSummary"],
+        },
       } as any,
     });
     const data = JSON.parse(response.text || "{}");
     return {
-      category: data.category as JobCategory || undefined,
+      category: (data.category as JobCategory) || undefined,
       keyword: data.keyword || undefined,
-      intentSummary: data.intentSummary || "Searching..."
+      intentSummary: data.intentSummary || "Searching...",
     };
   } catch (error) {
     return { intentSummary: "Searching..." };

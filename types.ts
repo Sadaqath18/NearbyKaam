@@ -1,19 +1,18 @@
-
 export enum UserRole {
-  WORKER = 'WORKER',
-  EMPLOYER = 'EMPLOYER',
-  ADMIN = 'ADMIN'
+  WORKER = "WORKER",
+  EMPLOYER = "EMPLOYER",
+  ADMIN = "ADMIN",
 }
 
 export enum JobCategory {
-  HOTEL = 'HOTEL',
-  SHOP = 'SHOP',
-  GARAGE = 'GARAGE',
-  DELIVERY = 'DELIVERY',
-  CONSTRUCTION = 'CONSTRUCTION',
-  HOUSE_HELP = 'HOUSE_HELP',
-  SECURITY = 'SECURITY',
-  OTHER = 'OTHER'
+  HOTEL = "HOTEL",
+  SHOP = "SHOP",
+  GARAGE = "GARAGE",
+  DELIVERY = "DELIVERY",
+  CONSTRUCTION = "CONSTRUCTION",
+  HOUSE_HELP = "HOUSE_HELP",
+  SECURITY = "SECURITY",
+  OTHER = "OTHER",
 }
 
 export interface Location {
@@ -23,7 +22,7 @@ export interface Location {
   state?: string;
   city?: string;
   pincode?: string;
-  source?: 'GPS' | 'NETWORK' | 'MANUAL';
+  source?: "GPS" | "NETWORK" | "MANUAL";
 }
 
 export interface ContactInfo {
@@ -36,8 +35,14 @@ export interface ShopPhoto {
   uploadedAt: string;
 }
 
-export type JobStatus = 'ACTIVE' | 'EXPIRED' | 'PENDING_APPROVAL' | 'REJECTED' | 'APPROVED' | 'PAUSED';
-export type SalaryType = 'DAY' | 'MONTH';
+export type JobStatus =
+  | "ACTIVE"
+  | "EXPIRED"
+  | "PENDING_APPROVAL"
+  | "REJECTED"
+  | "APPROVED"
+  | "PAUSED";
+export type SalaryType = "DAY" | "MONTH";
 
 export interface Job {
   id: string;
@@ -110,11 +115,11 @@ export interface User {
 }
 
 export enum AdminPermission {
-  FULL_ACCESS = 'FULL_ACCESS',
-  JOB_MODERATION = 'JOB_MODERATION',
-  EMPLOYER_VERIFICATION = 'EMPLOYER_VERIFICATION',
-  SAFETY_REPORTS = 'SAFETY_REPORTS',
-  USER_MANAGEMENT = 'USER_MANAGEMENT'
+  FULL_ACCESS = "FULL_ACCESS",
+  JOB_MODERATION = "JOB_MODERATION",
+  EMPLOYER_VERIFICATION = "EMPLOYER_VERIFICATION",
+  SAFETY_REPORTS = "SAFETY_REPORTS",
+  USER_MANAGEMENT = "USER_MANAGEMENT",
 }
 
 export interface LogEntry {
@@ -122,7 +127,7 @@ export interface LogEntry {
   adminId: string;
   adminName: string;
   action: string;
-  entityType: 'JOB' | 'EMPLOYER' | 'WORKER' | 'ADMIN' | 'SYSTEM';
+  entityType: "JOB" | "EMPLOYER" | "WORKER" | "ADMIN" | "SYSTEM";
   entityId: string;
   timestamp: string;
   details: string;
@@ -142,8 +147,8 @@ export interface WorkerProfile {
   email?: string;
   jobType: JobCategory;
   preferredJobTitle: string;
-  expectedMonthlySalary: string;
-  expectedDailyWage: string;
+  expectedMonthlySalary: number;
+  expectedDailyWage: number;
   location: Location | null;
   resume: WorkerResume;
   createdAt: string;
