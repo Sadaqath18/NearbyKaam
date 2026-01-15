@@ -1,0 +1,9 @@
+{
+  "name": "NearbyKaam",
+  "description": "A hyperlocal job discovery platform for blue-collar workers in India. Features voice assistance, one-tap communication, and map-based job hunting.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone",
+    "geolocation"
+  ]
+}
