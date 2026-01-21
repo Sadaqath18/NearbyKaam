@@ -13,13 +13,21 @@ import {
   UserRole,
 } from "../types";
 import { CATEGORIES, STATES_AND_CITIES, MOCK_JOBS } from "../constants";
+import CreateEmployerModal from "../components/admin/CreateEmployerModal";
+import CreateJobModal from "../components/admin/CreateJobModal";
+import CreateWorkerModal from "../components/admin/CreateWorkerModal";
+import CreateAdminModal from "../components/admin/CreateAdminModal";
+import CreateEntitySelectorModal from "../components/admin/CreateEntitySelectorModal";
+
+import CategoryGrid from "../components/CategoryGrid";
+import JobCard from "../components/JobCard";
 
 interface AdminViewProps {
   jobs: Job[];
   onUpdateStatus: (
     id: string,
     status: JobStatus,
-    additionalProps?: Partial<Job>
+    additionalProps?: Partial<Job>,
   ) => Promise<void>;
   onDelete: (id: string) => void;
   onClearReport: (id: string) => void;
@@ -48,11 +56,11 @@ const AdminView: React.FC<AdminViewProps> = ({
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [selectedWorker, setSelectedWorker] = useState<WorkerProfile | null>(
-    null
+    null,
   );
   const [selectedEmployer, setSelectedEmployer] = useState<any | null>(null);
   const [showCreateModal, setShowCreateModal] = useState<
-    "JOB" | "EMPLOYER" | "WORKER" | "ADMIN" | null
+    "SELECT" | "JOB" | "EMPLOYER" | "WORKER" | "ADMIN" | null
   >(null);
 
   const [managedAdmins, setManagedAdmins] = useState<User[]>(() => {
@@ -184,9 +192,9 @@ const AdminView: React.FC<AdminViewProps> = ({
         </div>
         <div className="flex items-center gap-3">
           <button
-            aria-label="Add New Job Posting"
-            title="Add New Job Posting"
-            onClick={() => setShowCreateModal("JOB")}
+            aria-label="Add New"
+            title="Add New"
+            onClick={() => setShowCreateModal("SELECT")}
             className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white active:scale-95 shadow-lg shadow-indigo-500/20"
           >
             <i className="fa-solid fa-plus"></i>
@@ -719,8 +727,8 @@ const AdminView: React.FC<AdminViewProps> = ({
                   onClick={() => {
                     setSelectedEmployer(
                       uniqueEmployers.find(
-                        (e) => e.id === selectedJob.employerId
-                      )
+                        (e) => e.id === selectedJob.employerId,
+                      ),
                     );
                     setSelectedJob(null);
                   }}
@@ -811,7 +819,7 @@ const AdminView: React.FC<AdminViewProps> = ({
                   ></div>
                 </div>
               </div>
-            )
+            ),
           )}
         </div>
       </div>
@@ -826,6 +834,57 @@ const AdminView: React.FC<AdminViewProps> = ({
       {renderEmployerDetailModal()}
 
       <div className="flex-1 overflow-y-auto no-scrollbar">
+        {showCreateModal === "SELECT" && (
+          <CreateEntitySelectorModal
+            onSelect={(type) => setShowCreateModal(type)}
+            onClose={() => setShowCreateModal(null)}
+          />
+        )}
+
+        {showCreateModal === "EMPLOYER" && (
+          <CreateEmployerModal
+            onCreate={(employer) => {
+              localStorage.setItem(
+                `nearbykaam_employer_profile_${employer.phone}`,
+                JSON.stringify(employer),
+              );
+              setShowCreateModal(null);
+            }}
+            onClose={() => setShowCreateModal(null)}
+          />
+        )}
+
+        {showCreateModal === "JOB" && (
+          <CreateJobModal
+            employers={uniqueEmployers}
+            onCreate={(job) => {
+              onUpdateStatus(job.id, "PENDING_APPROVAL", job);
+            }}
+            onClose={() => setShowCreateModal(null)}
+          />
+        )}
+
+        {showCreateModal === "WORKER" && (
+          <CreateWorkerModal
+            onCreate={() => {}}
+            onClose={() => setShowCreateModal(null)}
+          />
+        )}
+
+        {showCreateModal === "ADMIN" && (
+          <CreateAdminModal
+            onCreate={(admin) => {
+              const updated = [...managedAdmins, admin];
+              setManagedAdmins(updated);
+              localStorage.setItem(
+                "nearbykaam_managed_admins",
+                JSON.stringify(updated),
+              );
+            }}
+            onClose={() => setShowCreateModal(null)}
+          />
+        )}
+
         {activeModule === "OVERVIEW" && renderOverview()}
 
         {activeModule === "JOBS" && (
