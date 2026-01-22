@@ -94,9 +94,12 @@ export interface EmployerProfile {
   phone: string;
   shopName: string;
   industry: string;
-  location: Location | null;
+  location?: Location | null;
   shopPhoto: ShopPhoto | null;
   createdAt: string;
+  isVerified?: boolean;
+
+  expectedWageType?: "DAILY" | "MONTHLY";
 }
 
 export interface User {
@@ -147,8 +150,9 @@ export interface WorkerProfile {
   email?: string;
   jobType: JobCategory;
   preferredJobTitle: string;
-  expectedMonthlySalary: number;
-  expectedDailyWage: number;
+  expectedSalary?: number;
+  expectedSalaryType?: "DAILY" | "MONTHLY";
+
   location: Location | null;
   resume: WorkerResume;
   createdAt: string;

@@ -11,6 +11,25 @@ interface WorkerProfileDrawerProps {
   isMandatory?: boolean;
 }
 
+const getEmptyWorkerProfile = (phone: string): WorkerProfile => ({
+  phone,
+  name: "",
+  email: "",
+  preferredJobTitle: "",
+  jobType: "" as unknown as JobCategory,
+  expectedSalary: undefined,
+  expectedSalaryType: undefined,
+  location: undefined,
+  createdAt: new Date().toISOString(), // ✅ REQUIRED FIELD
+  resume: {
+    hasAudio: false,
+    hasDocument: false,
+    audioUrl: null,
+    documentUrl: null,
+    documentName: null,
+  },
+});
+
 const WorkerProfileDrawer: React.FC<WorkerProfileDrawerProps> = ({
   isOpen,
   onClose,
@@ -19,12 +38,15 @@ const WorkerProfileDrawer: React.FC<WorkerProfileDrawerProps> = ({
   onChangeLanguage,
   isMandatory = false,
 }) => {
-  const [localProfile, setLocalProfile] = useState<WorkerProfile>(profile);
+  const [localProfile, setLocalProfile] = useState<WorkerProfile>(() =>
+    getEmptyWorkerProfile(profile.phone),
+  );
+
   const [step, setStep] = useState(1);
   const [isRecording, setIsRecording] = useState(false);
   const [recordingSeconds, setRecordingSeconds] = useState(0);
   const [audioPreviewUrl, setAudioPreviewUrl] = useState<string | null>(
-    profile.resume?.audioUrl || null
+    profile.resume?.audioUrl || null,
   );
   const [errors, setErrors] = useState<string[]>([]);
 
@@ -34,13 +56,18 @@ const WorkerProfileDrawer: React.FC<WorkerProfileDrawerProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    setLocalProfile(profile);
-    setAudioPreviewUrl(profile.resume?.audioUrl || null);
-    if (isOpen) {
-      setErrors([]);
-      setStep(1);
+    // Always reset when phone changes (NEW LOGIN)
+    setLocalProfile(getEmptyWorkerProfile(profile.phone));
+    setAudioPreviewUrl(null);
+    setErrors([]);
+    setStep(1);
+
+    // If profile already belongs to THIS phone and is completed → edit mode
+    if (profile.phone && profile.name && profile.preferredJobTitle) {
+      setLocalProfile(profile);
+      setAudioPreviewUrl(profile.resume?.audioUrl || null);
     }
-  }, [profile, isOpen]);
+  }, [profile.phone, isOpen]);
 
   // Clean up timer on unmount
   useEffect(() => {
@@ -166,7 +193,7 @@ const WorkerProfileDrawer: React.FC<WorkerProfileDrawerProps> = ({
       if (!localProfile.jobType)
         currentErrors.push("Please select an Industry");
     } else if (step === 2) {
-      if (!localProfile.expectedMonthlySalary)
+      if (!localProfile.expectedSalary)
         currentErrors.push("Monthly Salary is required");
     }
     setErrors(currentErrors);
@@ -341,56 +368,49 @@ const WorkerProfileDrawer: React.FC<WorkerProfileDrawerProps> = ({
 
           {step === 2 && (
             <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
-              <div>
-                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">
-                  Expected Monthly Salary*
-                </label>
-                <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-gray-400">
-                    ₹
-                  </span>
-                  <input
-                    type="number"
-                    title="Minimum monthly salary you expect"
-                    className="w-full bg-gray-50 border-0 rounded-2xl p-4 pl-8 font-black text-gray-800 focus:ring-2 focus:ring-orange-500 outline-none"
-                    placeholder="e.g. 15000"
-                    value={localProfile.expectedMonthlySalary}
-                    onChange={(e) =>
-                      setLocalProfile({
-                        ...localProfile,
-                        expectedMonthlySalary: Number(e.target.value),
-                      })
-                    }
-                  />
-                </div>
-              </div>
+              {/* Expected Salary Input */}
+              <input
+                type="text"
+                inputMode="numeric"
+                placeholder="₹ Expected salary"
+                aria-label="Expected salary"
+                title="Expected salary"
+                value={localProfile.expectedSalary ?? ""}
+                onChange={(e) => {
+                  const val = e.target.value.replace(/\D/g, "");
+                  setLocalProfile({
+                    ...localProfile,
+                    expectedSalary: val ? Number(val) : undefined,
+                  });
+                }}
+                className="w-full border rounded-xl p-3 text-sm font-bold"
+              />
 
-              <div>
-                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">
-                  Expected Daily Wage (Optional)
-                </label>
-                <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-gray-400">
-                    ₹
-                  </span>
-                  <input
-                    type="number"
-                    title="Expected daily wage for part-time/daily work"
-                    className="w-full bg-gray-50 border-0 rounded-2xl p-4 pl-8 font-black text-gray-800 focus:ring-2 focus:ring-orange-500 outline-none"
-                    placeholder="e.g. 500"
-                    value={localProfile.expectedDailyWage}
-                    onChange={(e) =>
+              {/* Salary Type Toggle */}
+              <div className="flex gap-2">
+                {(["DAILY", "MONTHLY"] as const).map((type) => (
+                  <button
+                    key={type}
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
                       setLocalProfile({
                         ...localProfile,
-                        expectedDailyWage: Number(e.target.value),
-                      })
-                    }
-                  />
-                </div>
+                        expectedSalaryType: type,
+                      });
+                    }}
+                    className={`flex-1 py-3 rounded-xl text-xs font-black uppercase ${
+                      localProfile.expectedSalaryType === type
+                        ? "bg-indigo-600 text-white"
+                        : "bg-slate-100 text-slate-500"
+                    }`}
+                  >
+                    {type}
+                  </button>
+                ))}
               </div>
             </div>
           )}
-
           {step === 3 && (
             <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
               <div className="text-center">
@@ -406,8 +426,8 @@ const WorkerProfileDrawer: React.FC<WorkerProfileDrawerProps> = ({
                     isRecording
                       ? "bg-red-50 border-red-200"
                       : localProfile.resume.hasAudio
-                      ? "bg-emerald-50 border-emerald-100"
-                      : "bg-orange-50 border-orange-100"
+                        ? "bg-emerald-50 border-emerald-100"
+                        : "bg-orange-50 border-orange-100"
                   }`}
                 >
                   <button
@@ -421,8 +441,8 @@ const WorkerProfileDrawer: React.FC<WorkerProfileDrawerProps> = ({
                       isRecording
                         ? "bg-red-500 animate-pulse"
                         : localProfile.resume.hasAudio
-                        ? "bg-emerald-500"
-                        : "bg-orange-500"
+                          ? "bg-emerald-500"
+                          : "bg-orange-500"
                     }`}
                   >
                     <i

@@ -29,7 +29,7 @@ function calculateDistance(
   lat1: number,
   lon1: number,
   lat2: number,
-  lon2: number
+  lon2: number,
 ): number {
   const R = 6371;
   const dLat = ((lat2 - lat1) * Math.PI) / 180;
@@ -41,7 +41,7 @@ function calculateDistance(
       Math.sin(dLon / 2) *
       Math.sin(dLon / 2);
   return parseFloat(
-    (R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)))).toFixed(1)
+    (R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)))).toFixed(1),
   );
 }
 
@@ -59,7 +59,7 @@ const WorkerView: React.FC<WorkerViewProps> = ({
   setIsProfileOpen,
 }) => {
   const [viewState, setViewState] = useState<"INDUSTRY_SELECT" | "JOB_FEED">(
-    "INDUSTRY_SELECT"
+    "INDUSTRY_SELECT",
   );
   const [userLocation, setUserLocation] = useState<Location | null>(() => {
     const saved = localStorage.getItem("nearbykaam_loc");
@@ -77,30 +77,48 @@ const WorkerView: React.FC<WorkerViewProps> = ({
   const [voiceStatus, setVoiceStatus] = useState("");
   const [interimTranscript, setInterimTranscript] = useState("");
 
-  const [profile, setProfile] = useState<WorkerProfile>(() => {
-    const saved = localStorage.getItem("nearbykaam_worker_profile");
-    const baseProfile = {
-      name: "",
-      phone: currentUser?.phone || "",
-      email: "",
-      jobType: JobCategory.OTHER,
-      preferredJobTitle: "",
-      expectedMonthlySalary: "",
-      expectedDailyWage: "",
-      location: null,
-      resume: { hasAudio: false, hasDocument: false },
-      createdAt: new Date().toISOString(),
-    };
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      return {
-        ...baseProfile,
-        ...parsed,
-        phone: currentUser?.phone || parsed.phone,
-      };
-    }
-    return baseProfile;
+  const getEmptyWorkerProfile = (phone: string): WorkerProfile => ({
+    phone,
+    name: "",
+    email: "",
+    preferredJobTitle: "",
+    jobType: "" as unknown as JobCategory,
+    expectedSalary: undefined,
+    expectedSalaryType: undefined,
+    location: undefined,
+    resume: {
+      hasAudio: false,
+      hasDocument: false,
+      audioUrl: null,
+      documentUrl: null,
+      documentName: null,
+    },
+    createdAt: new Date().toISOString(),
   });
+
+  const [profile, setProfile] = useState<WorkerProfile>(() => {
+    if (!currentUser?.phone) {
+      return getEmptyWorkerProfile("");
+    }
+
+    const saved = localStorage.getItem(
+      `nearbykaam_worker_profile_${currentUser.phone}`,
+    );
+
+    return saved ? JSON.parse(saved) : getEmptyWorkerProfile(currentUser.phone);
+  });
+
+  useEffect(() => {
+    if (!currentUser?.phone) return;
+
+    const saved = localStorage.getItem(
+      `nearbykaam_worker_profile_${currentUser.phone}`,
+    );
+
+    setProfile(
+      saved ? JSON.parse(saved) : getEmptyWorkerProfile(currentUser.phone),
+    );
+  }, [currentUser?.phone]);
 
   useEffect(() => {
     if (!userLocation && "geolocation" in navigator) {
@@ -135,7 +153,7 @@ const WorkerView: React.FC<WorkerViewProps> = ({
       navigator.geolocation.getCurrentPosition(
         handleSuccess,
         handleError,
-        geoOptions
+        geoOptions,
       );
     }
   }, []);
@@ -147,7 +165,7 @@ const WorkerView: React.FC<WorkerViewProps> = ({
 
   const processedJobs = useMemo(() => {
     let list = allJobs.filter(
-      (j) => j.status === "APPROVED" && j.isLive === true
+      (j) => j.status === "APPROVED" && j.isLive === true,
     );
 
     if (userLocation) {
@@ -157,7 +175,7 @@ const WorkerView: React.FC<WorkerViewProps> = ({
           userLocation.lat,
           userLocation.lng,
           job.location.lat,
-          job.location.lng
+          job.location.lng,
         ),
       }));
       list = list.filter((j) => (j.distance || 0) <= maxDistance);
@@ -172,7 +190,7 @@ const WorkerView: React.FC<WorkerViewProps> = ({
         if (!j.experienceLevel) return false;
         if (selectedExperience === "Entry Level") {
           return ["Entry Level", "Fresher", "No Experience"].includes(
-            j.experienceLevel
+            j.experienceLevel,
           );
         }
         if (selectedExperience === "3+ Years") {
@@ -304,7 +322,10 @@ const WorkerView: React.FC<WorkerViewProps> = ({
 
   const handleSaveProfile = (p: WorkerProfile) => {
     setProfile(p);
-    localStorage.setItem("nearbykaam_worker_profile", JSON.stringify(p));
+    localStorage.setItem(
+      `nearbykaam_worker_profile_${p.phone}`,
+      JSON.stringify(p),
+    );
     onProfileCompleted();
     setIsProfileOpen(false);
   };
@@ -601,7 +622,7 @@ const WorkerView: React.FC<WorkerViewProps> = ({
                         {state}
                       </p>
                     </button>
-                  ))
+                  )),
                 )}
               </div>
             </div>
@@ -622,7 +643,7 @@ const WorkerView: React.FC<WorkerViewProps> = ({
                       setIsLocationPickerOpen(false);
                     },
                     null,
-                    { enableHighAccuracy: true }
+                    { enableHighAccuracy: true },
                   );
                 }
               }}

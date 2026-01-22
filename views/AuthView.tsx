@@ -404,9 +404,24 @@ const AuthView: React.FC<AuthViewProps> = ({
             <h2 className="text-2xl font-black text-slate-900 mb-2">
               Verify OTP
             </h2>
-            <p className="text-slate-500 text-[10px] font-bold uppercase mb-8">
-              Sent to +91 {phone}
-            </p>
+            <div className="flex items-center justify-between mb-8">
+              <p className="text-slate-500 text-[10px] font-bold uppercase">
+                Sent to +91 {phone}
+              </p>
+
+              <button
+                type="button"
+                title="Change phone number"
+                onClick={() => {
+                  setOtp(Array(6).fill(""));
+                  setStep(step === "ADMIN_OTP" ? "ADMIN_PHONE" : "PHONE");
+                }}
+                className="text-[10px] font-black uppercase tracking-widest text-indigo-600 hover:underline"
+              >
+                ← Change Ph No.
+              </button>
+            </div>
+
             <div className="flex justify-between gap-2 mb-10">
               {otp.map((d, i) => (
                 <input
@@ -421,6 +436,9 @@ const AuthView: React.FC<AuthViewProps> = ({
                   className="w-11 h-14 bg-white border-2 border-slate-400 rounded-xl text-center text-xl font-black focus:border-indigo-600 focus:ring-4 focus:ring-indigo-50 outline-none shadow-md transition-all"
                   value={d}
                   onChange={(e) => {
+                    const val = e.target.value.replace(/\D/g, ""); // remove non-numbers
+                    if (!val) return;
+
                     const next = [...otp];
                     next[i] = e.target.value.slice(-1);
                     setOtp(next);
@@ -428,9 +446,41 @@ const AuthView: React.FC<AuthViewProps> = ({
                       document.getElementById(`otp-${i + 1}`)?.focus();
                     }
                   }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Backspace") {
+                      const next = [...otp];
+                      if (otp[i]) {
+                        next[i] = "";
+                        setOtp(next);
+                      } else if (i > 0) {
+                        next[i - 1] = "";
+                        setOtp(next);
+                        document.getElementById(`otp-${i - 1}`)?.focus();
+                      }
+                    }
+                  }}
+                  onPaste={(e) => {
+                    e.preventDefault();
+                    const paste = e.clipboardData
+                      .getData("text")
+                      .replace(/\D/g, "")
+                      .slice(0, otp.length);
+
+                    if (!paste) return;
+
+                    const next = [...otp];
+                    paste.split("").forEach((char, idx) => {
+                      next[idx] = char;
+                    });
+                    setOtp(next);
+
+                    const lastIndex = paste.length - 1;
+                    document.getElementById(`otp-${lastIndex}`)?.focus();
+                  }}
                 />
               ))}
             </div>
+
             <button
               onClick={handleVerify}
               disabled={isVerifying}

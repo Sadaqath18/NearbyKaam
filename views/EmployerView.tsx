@@ -9,6 +9,9 @@ import {
   User,
 } from "../types";
 import { CATEGORIES } from "../constants";
+import { EmployerProfile } from "../types";
+import { createEmptyEmployerProfile } from "../utils/employerProfile";
+import EmployerProfileDrawer from "../components/EmployerProfileDrawer";
 
 interface EmployerViewProps {
   onJobSubmit: (job: Job) => void;
@@ -24,8 +27,7 @@ const MOCK_APPLICANTS: WorkerProfile[] = [
     phone: "9876543221",
     jobType: JobCategory.HOTEL,
     preferredJobTitle: "Assistant Cook",
-    expectedMonthlySalary: 18000,
-    expectedDailyWage: 650,
+    expectedSalary: 18000,
     location: { lat: 19.076, lng: 72.8777, address: "Andheri West" },
     resume: {
       hasAudio: true,
@@ -45,17 +47,36 @@ const EmployerView: React.FC<EmployerViewProps> = ({
   currentUser,
   onLogout,
 }) => {
+  const [employerProfile, setEmployerProfile] =
+    useState<EmployerProfile | null>(null);
+
   const [view, setView] = useState<
     "DASHBOARD" | "POST_JOB" | "APPLICANTS" | "SUCCESS"
   >("DASHBOARD");
+  useEffect(() => {
+    if (!currentUser?.phone) return;
+
+    const key = `nearbykaam_employer_profile_${currentUser.phone}`;
+    const saved = localStorage.getItem(key);
+
+    if (saved) {
+      setEmployerProfile(JSON.parse(saved));
+    } else {
+      const fresh = createEmptyEmployerProfile(currentUser.phone);
+      localStorage.setItem(key, JSON.stringify(fresh));
+      setEmployerProfile(fresh);
+    }
+  }, [currentUser?.phone]);
+
   const [isReviewing, setIsReviewing] = useState(false);
   const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
   const [isPosting, setIsPosting] = useState(false);
+  const [isEmployerProfileOpen, setIsEmployerProfileOpen] = useState(false);
 
   const [postData, setPostData] = useState({
-    firstName: currentUser?.employerProfile?.firstName || "",
-    shopName: currentUser?.employerProfile?.shopName || "",
-    industry: currentUser?.employerProfile?.industry || "",
+    firstName: "",
+    shopName: "",
+    industry: "",
     jobRole: "",
     category: undefined as JobCategory | undefined,
     description: "",
@@ -64,11 +85,21 @@ const EmployerView: React.FC<EmployerViewProps> = ({
     sameAsWhatsApp: true,
     salaryAmount: "",
     salaryType: "DAY" as SalaryType,
-    location:
-      currentUser?.employerProfile?.location || (null as Location | null),
-    shopPhoto:
-      currentUser?.employerProfile?.shopPhoto || (null as ShopPhoto | null),
+    location: null as Location | null,
+    shopPhoto: null as ShopPhoto | null,
   });
+
+  useEffect(() => {
+    if (!employerProfile) return;
+
+    setPostData((prev) => ({
+      ...prev,
+      firstName: employerProfile.firstName,
+      shopName: employerProfile.shopName,
+      industry: employerProfile.industry,
+      location: employerProfile.location || null,
+    }));
+  }, [employerProfile]);
 
   const [otpValue, setOtpValue] = useState(["", "", "", "", "", ""]);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -144,6 +175,23 @@ const EmployerView: React.FC<EmployerViewProps> = ({
   const handleFinalSubmit = () => {
     setIsPosting(true);
     setTimeout(() => {
+      if (employerProfile) {
+        const updatedProfile = {
+          ...employerProfile,
+          ownerName: postData.firstName,
+          shopName: postData.shopName,
+          industry: postData.industry as JobCategory,
+          location: postData.location ?? employerProfile.location,
+        };
+
+        localStorage.setItem(
+          `nearbykaam_employer_profile_${employerProfile.phone}`,
+          JSON.stringify(updatedProfile),
+        );
+
+        setEmployerProfile(updatedProfile);
+      }
+
       onJobSubmit({
         id: Math.random().toString(36).substr(2, 9),
         title: postData.jobRole,
@@ -208,12 +256,14 @@ const EmployerView: React.FC<EmployerViewProps> = ({
           </div>
           <div className="flex items-center gap-3">
             <button
-              title="Language"
-              onClick={onChangeLanguage}
+              title="Edit employer profile"
+              aria-label="Edit employer profile"
+              onClick={() => setIsEmployerProfileOpen(true)}
               className="w-11 h-11 bg-white/10 rounded-2xl flex items-center justify-center text-white border border-white/20 active:scale-95 transition-all"
             >
-              <i className="fa-solid fa-globe"></i>
+              <i className="fa-solid fa-user-gear"></i>
             </button>
+
             <button
               title="Logout"
               onClick={onLogout}
@@ -810,7 +860,7 @@ const EmployerView: React.FC<EmployerViewProps> = ({
               </div>
               <div className="text-right">
                 <p className="text-indigo-600 font-black text-base">
-                  ₹{applicant.expectedMonthlySalary}
+                  ₹{applicant.expectedSalary}
                 </p>
               </div>
             </div>
@@ -871,6 +921,22 @@ const EmployerView: React.FC<EmployerViewProps> = ({
         <div className="fixed bottom-24 left-1/2 -translate-x-1/2 w-full px-6 flex justify-center z-30 pointer-events-none">
           {/* Keeping button hidden here as it moved to header, but retaining structure if needed */}
         </div>
+      )}
+      {employerProfile && (
+        <EmployerProfileDrawer
+          isOpen={isEmployerProfileOpen}
+          isMandatory={false}
+          profile={employerProfile}
+          onClose={() => setIsEmployerProfileOpen(false)}
+          onSave={(updatedProfile) => {
+            setEmployerProfile(updatedProfile);
+            localStorage.setItem(
+              `nearbykaam_employer_profile_${updatedProfile.phone}`,
+              JSON.stringify(updatedProfile),
+            );
+            setIsEmployerProfileOpen(false);
+          }}
+        />
       )}
     </div>
   );

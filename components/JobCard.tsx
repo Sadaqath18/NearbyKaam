@@ -17,6 +17,27 @@ interface JobCardProps {
   workerProfile?: WorkerProfile;
 }
 
+/* ---------- MAP HELPER ---------- */
+const openInMaps = (job: Job) => {
+  const { lat, lng, address } = job.location || {};
+  const loc = { lat, lng, address };
+  if (lat && lng) {
+    window.open(
+      `https://www.google.com/maps?q=${loc.lat},${loc.lng}`,
+      "_blank",
+    );
+  } else if (loc?.address) {
+    window.open(
+      `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+        loc.address,
+      )}`,
+      "_blank",
+    );
+  } else {
+    alert("Location not available");
+  }
+};
+
 const JobCard: React.FC<JobCardProps> = ({
   job,
   onReport,
@@ -62,7 +83,7 @@ const JobCard: React.FC<JobCardProps> = ({
 
   const handleShare = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    const shareText = `🔍 New Job Found on NearbyKaam!\n\n📌 Role: ${displayRole}\n🏢 Company: ${job.employerName}\n📍 Location: ${job.location.address}\n💰 Salary: ₹${job.ount} per ${job.salaryType === "DAY" ? "Day" : "Month"}\n\nCheck it out here: https://nearbykaam.in/jobs/${job.id}`;
+    const shareText = `🔍 New Job Found on NearbyKaam!\n\n📌 Role: ${displayRole}\n🏢 Company: ${job.employerName}\n📍 Location: ${job.location.address}\n💰 Salary: ₹${job.salaryAmount} per ${job.salaryType === "DAY" ? "Day" : "Month"}\n\nCheck it out here: https://nearbykaam.in/jobs/${job.id}`;
 
     if (navigator.share) {
       try {
@@ -121,7 +142,9 @@ const JobCard: React.FC<JobCardProps> = ({
         <h4 className="font-black text-slate-900 text-[10px] truncate leading-tight uppercase">
           {displayRole}
         </h4>
-        <p className="text-indigo-600 font-black text-xs">₹{job.ount}</p>
+        <p className="text-indigo-600 font-black text-xs">
+          ₹{job.salaryAmount}
+        </p>
       </div>
     );
   }
@@ -130,7 +153,7 @@ const JobCard: React.FC<JobCardProps> = ({
     const posted = new Date(dateStr);
     const now = new Date();
     const diffHours = Math.floor(
-      (now.getTime() - posted.getTime()) / (1000 * 60 * 60)
+      (now.getTime() - posted.getTime()) / (1000 * 60 * 60),
     );
     if (diffHours < 1) return "Just now";
     if (diffHours < 24) return `${diffHours}h ago`;
@@ -196,15 +219,6 @@ const JobCard: React.FC<JobCardProps> = ({
                   title="Share Job"
                 >
                   <i className="fa-solid fa-share-nodes text-sm"></i>
-                </button>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                  }}
-                  className="w-8 h-8 flex items-center justify-center text-slate-300 hover:text-indigo-600 active:scale-90 transition-all"
-                  title="Bookmark Job"
-                >
-                  <i className="fa-regular fa-bookmark"></i>
                 </button>
               </div>
             </div>
@@ -282,26 +296,51 @@ const JobCard: React.FC<JobCardProps> = ({
               </div>
             </div>
 
-            <div className="flex flex-col gap-3">
+            <div className="grid grid-cols-3 gap-2 pt-3">
+              {/* CALL */}
               <button
+                title="Call the employer"
                 onClick={handleCall}
-                className="w-full bg-slate-900 text-white font-black py-5 rounded-2xl flex items-center justify-center gap-4 shadow-xl active:scale-95 transition-all text-xs uppercase tracking-widest"
+                className="bg-slate-900 text-white py-4 rounded-2xl text-xs font-black flex flex-col items-center justify-center gap-1 active:scale-95 transition-all"
               >
-                <i className="fa-solid fa-phone-volume text-base text-indigo-400"></i>{" "}
-                Call Employer
+                <i className="fa-solid fa-phone-volume text-lg text-indigo-400"></i>
+                <span className="text-[11px] uppercase tracking-widest">
+                  Call
+                </span>
               </button>
+
+              {/* WHATSAPP */}
               <button
+                title="Chat on WhatsApp"
                 onClick={handleWhatsApp}
-                className="w-full bg-emerald-500 text-white font-black py-4 rounded-2xl flex items-center justify-center gap-3 active:scale-95 transition-all shadow-lg shadow-emerald-50"
+                className="bg-emerald-500 text-white py-4 rounded-2xl text-xs font-black flex flex-col items-center justify-center gap-1 active:scale-95 transition-all shadow-lg shadow-emerald-100"
               >
                 <i className="fa-brands fa-whatsapp text-xl"></i>
-                <span className="text-[10px] font-black uppercase tracking-widest">
-                  Chat on WhatsApp
+                <span className="text-[11px] uppercase tracking-widest">
+                  WhatsApp
+                </span>
+              </button>
+
+              {/* MAP */}
+              <button
+                title="View job location on map"
+                aria-label="View job on map"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  openInMaps(job);
+                }}
+                className="bg-indigo-600 text-white py-4 rounded-2xl text-xs font-black flex flex-col items-center justify-center gap-1 active:scale-95 transition-all shadow-lg shadow-indigo-100"
+              >
+                <i className="fa-solid fa-location-dot text-lg"></i>
+                <span className="text-[11px] uppercase tracking-widest">
+                  Map
                 </span>
               </button>
             </div>
 
+            {/* REPORT BUTTON */}
             <button
+              title="Report this job"
               onClick={(e) => {
                 e.stopPropagation();
                 onReport(job.id);

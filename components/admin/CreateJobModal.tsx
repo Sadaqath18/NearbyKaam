@@ -238,7 +238,7 @@ const CreateJobModal: React.FC<Props> = ({ employers, onCreate, onClose }) => {
 
         {/* Shop Name */}
         <input
-          placeholder="Shop / Business name"
+          placeholder="Business Logo/Shop Name"
           value={manualShopName}
           onChange={(e) => setManualShopName(e.target.value)}
           className="w-full border p-3 text-sm rounded-xl font-bold mb-3"
