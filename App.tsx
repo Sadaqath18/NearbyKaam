@@ -1,12 +1,5 @@
 import React, { useState, useEffect } from "react";
-import {
-  UserRole,
-  Job,
-  JobStatus,
-  User,
-  AdminPermission,
-  EmployerProfile,
-} from "./types";
+import { UserRole, Job, User, AdminPermission, EmployerProfile } from "./types";
 
 import WorkerView from "./views/WorkerView";
 import EmployerView from "./views/EmployerView";
@@ -20,24 +13,36 @@ import { stopSpeaking, speakText } from "./services/geminiService";
 import { GoogleGenAI } from "@google/genai";
 
 const App: React.FC = () => {
+  /* ---------------- User ---------------- */
   const [currentUser, setCurrentUser] = useState<User | null>(() => {
     const saved = localStorage.getItem("nearbykaam_user");
     return saved ? JSON.parse(saved) : null;
   });
 
+  /* ---------------- Jobs ---------------- */
   const [jobs, setJobs] = useState<Job[]>(() => {
     const saved = localStorage.getItem("nearbykaam_jobs_v3");
     return saved ? JSON.parse(saved) : MOCK_JOBS;
   });
 
-  const [language, setLanguage] = useState<string | null>(
-    localStorage.getItem("nearbykaam_lang")
+  /* ---------------- Language (GLOBAL) ---------------- */
+  const [language, setLanguage] = useState<string>(
+    localStorage.getItem("nearbykaam_lang") || "en",
   );
   const [isChangingLanguage, setIsChangingLanguage] = useState(false);
+
+  /* ---------------- UI Flags ---------------- */
   const [isGuest, setIsGuest] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isEmployerProfileOpen, setIsEmployerProfileOpen] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
+
+  /* ---------------- Language change (SINGLE SOURCE) ---------------- */
+  const changeLanguage = (lang: string) => {
+    setLanguage(lang);
+    localStorage.setItem("nearbykaam_lang", lang);
+    setIsChangingLanguage(false);
+  };
 
   /* ---------------- Language back navigation ---------------- */
   useEffect(() => {
@@ -124,6 +129,7 @@ const App: React.FC = () => {
     });
   };
 
+  /* ---------------- Auth ---------------- */
   const handleLogin = (role: UserRole, phone: string) => {
     let profileCompleted = false;
     let workerProfile;
@@ -142,7 +148,7 @@ const App: React.FC = () => {
 
     if (role === UserRole.EMPLOYER) {
       const saved = localStorage.getItem(
-        `nearbykaam_employer_profile_${phone}`
+        `nearbykaam_employer_profile_${phone}`,
       );
       if (saved) {
         const p = JSON.parse(saved);
@@ -201,13 +207,13 @@ const App: React.FC = () => {
     setCurrentUser(updated);
     localStorage.setItem(
       `nearbykaam_employer_profile_${currentUser.phone}`,
-      JSON.stringify(p)
+      JSON.stringify(p),
     );
     localStorage.setItem("nearbykaam_user", JSON.stringify(updated));
     setIsEmployerProfileOpen(false);
   };
 
-  /* ---------------- Render ---------------- */
+  /* ---------------- Render main content ---------------- */
   const renderContent = () => {
     if (!currentUser && !isGuest) {
       return (
@@ -215,7 +221,7 @@ const App: React.FC = () => {
           onLogin={handleLogin}
           onAdminLogin={(p) => handleLogin(UserRole.ADMIN, p)}
           onGuestAccess={() => setIsGuest(true)}
-          language={language || "en"}
+          language={language}
           onChangeLanguage={() => setIsChangingLanguage(true)}
         />
       );
@@ -226,12 +232,12 @@ const App: React.FC = () => {
         return (
           <WorkerView
             jobs={jobs}
-            onReport={(id) =>
-              updateJobsAtomic((p) =>
-                p.map((j) => (j.id === id ? { ...j, isReported: true } : j))
-              )
-            }
-            language={language || "en"}
+            onReport={async (id) => {
+              updateJobsAtomic((prev) =>
+                prev.map((j) => (j.id === id ? { ...j, isReported: true } : j)),
+              );
+            }}
+            language={language}
             onChangeLanguage={() => setIsChangingLanguage(true)}
             isGuest={isGuest}
             currentUser={currentUser}
@@ -279,7 +285,7 @@ const App: React.FC = () => {
             jobs={jobs}
             onUpdateStatus={async (id, status, p) =>
               updateJobsAtomic((prev) =>
-                prev.map((j) => (j.id === id ? { ...j, status, ...p } : j))
+                prev.map((j) => (j.id === id ? { ...j, status, ...p } : j)),
               )
             }
             onDelete={(id) =>
@@ -287,12 +293,14 @@ const App: React.FC = () => {
             }
             onClearReport={(id) =>
               updateJobsAtomic((prev) =>
-                prev.map((j) => (j.id === id ? { ...j, isReported: false } : j))
+                prev.map((j) =>
+                  j.id === id ? { ...j, isReported: false } : j,
+                ),
               )
             }
             onVerifyEmployer={(id) =>
               updateJobsAtomic((prev) =>
-                prev.map((j) => (j.id === id ? { ...j, isVerified: true } : j))
+                prev.map((j) => (j.id === id ? { ...j, isVerified: true } : j)),
               )
             }
             onLogout={handleLogout}
@@ -301,20 +309,21 @@ const App: React.FC = () => {
     }
   };
 
+  /* ---------------- Language screen ---------------- */
   if (!language || isChangingLanguage) {
     return (
       <div className="max-w-md mx-auto h-screen bg-white">
         <LanguageSelectionView
-          onSelect={(c) => {
-            setLanguage(c);
-            localStorage.setItem("nearbykaam_lang", c);
-            setIsChangingLanguage(false);
-          }}
+          onSelect={changeLanguage}
+          onBack={
+            isChangingLanguage ? () => setIsChangingLanguage(false) : undefined
+          }
         />
       </div>
     );
   }
 
+  /* ---------------- App shell ---------------- */
   return (
     <div className="max-w-md mx-auto h-screen bg-slate-50 flex flex-col relative shadow-2xl overflow-hidden border-x border-slate-200">
       <div className="flex-1 overflow-hidden">{renderContent()}</div>
