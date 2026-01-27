@@ -3,12 +3,15 @@ import { UserRole } from "../types";
 import { ADMIN_WHITELIST } from "../constants";
 import { speakText } from "../services/geminiService";
 import STRINGS from "../i18n/strings";
+import AUTH_STRINGS from "../i18n/auth";
+import VoiceInstruction from "../components/VoiceInstructions";
+import { useLanguage } from "../context/LanguageContext";
 
 interface AuthViewProps {
   onLogin: (role: UserRole, phone: string) => void;
   onAdminLogin: (phone: string) => void;
   onGuestAccess: () => void;
-  language: string;
+
   onChangeLanguage: () => void;
 }
 
@@ -18,12 +21,16 @@ const AuthView: React.FC<AuthViewProps> = ({
   onLogin,
   onAdminLogin,
   onGuestAccess,
-  language,
   onChangeLanguage,
 }) => {
   const [step, setStep] = useState<
     "ROLE" | "PHONE" | "OTP" | "ADMIN_PHONE" | "ADMIN_OTP"
   >("ROLE");
+
+  const { language } = useLanguage();
+  const lang = language ?? "en";
+  const t = STRINGS[lang];
+  const a = AUTH_STRINGS[lang];
 
   const [selectedRole, setSelectedRole] = useState<UserRole>(UserRole.WORKER);
   const [phone, setPhone] = useState("");
@@ -34,17 +41,16 @@ const AuthView: React.FC<AuthViewProps> = ({
 
   const recognitionRef = useRef<any>(null);
 
-  const t = STRINGS[language] || STRINGS["en"];
-
   /* ---------------- TTS (SPEAK ROLE) ---------------- */
+
   const speakRole = (text: string, role: SpeakingRole) => {
-    if (!("speechSynthesis" in window)) return;
+    if (!("speechSynthesis" in window) || !language) return;
 
     window.speechSynthesis.cancel();
     setSpeakingRole(role);
 
     const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = language;
+    utterance.lang = `${language}-IN`;
 
     utterance.onend = () => setSpeakingRole(null);
     utterance.onerror = () => setSpeakingRole(null);
@@ -59,19 +65,6 @@ const AuthView: React.FC<AuthViewProps> = ({
     }
   };
 
-  // const speakRole = (text: string, role: "WORK" | "HIRE") => {
-  //   setSpeakingRole(role);
-  //   speakText(text, language);
-
-  //   const synth = window.speechSynthesis;
-  //   const checkEnd = setInterval(() => {
-  //     if (!synth.speaking) {
-  //       setSpeakingRole(null);
-  //       clearInterval(checkEnd);
-  //     }
-  //   }, 100);
-  // };
-
   /* ---------------- VOICE COMMAND ---------------- */
   const startVoiceCommand = () => {
     const SpeechRecognition =
@@ -84,7 +77,26 @@ const AuthView: React.FC<AuthViewProps> = ({
     }
 
     const recognition = new SpeechRecognition();
-    recognition.lang = language;
+    recognition.lang =
+      {
+        en: "en-IN",
+        hi: "hi-IN",
+        kn: "kn-IN",
+        ta: "ta-IN",
+        te: "te-IN",
+        mr: "mr-IN",
+        ur: "ur-IN",
+        ml: "ml-IN",
+        gu: "gu-IN",
+        bn: "bn-IN",
+        pa: "pa-IN",
+        or: "or-IN",
+        as: "as-IN",
+        ne: "ne-NP",
+        sd: "sd-IN",
+        ks: "ur-IN",
+      }[language] || "en-IN";
+
     recognition.interimResults = false;
     recognition.maxAlternatives = 1;
 
@@ -341,9 +353,12 @@ ${
 
         {(step === "OTP" || step === "ADMIN_OTP") && (
           <div className="animate-in fade-in slide-in-from-right-4">
+            <VoiceInstruction title={a.tapToHear} text={a.otpInstruction} />
+
             <h2 className="text-2xl font-black text-slate-900 mb-2">
               Verify OTP
             </h2>
+
             <div className="flex items-center justify-between mb-8">
               <p className="text-slate-500 text-[10px] font-bold uppercase">
                 Sent to +91 {phone}

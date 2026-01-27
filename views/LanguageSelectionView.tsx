@@ -46,7 +46,6 @@ const LanguageSelectionView: React.FC<LanguageSelectionViewProps> = ({
       speakText(lang.nativeName, lang.code);
     }
   };
-  
 
   const handleFirstInteraction = () => {
     if (!sessionStorage.getItem("LANGUAGE_GREETING_PLAYED")) {
@@ -106,35 +105,33 @@ const LanguageSelectionView: React.FC<LanguageSelectionViewProps> = ({
           {topLanguages.map((lang) => (
             <div
               key={lang.code}
-              className="relative bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center justify-center hover:border-orange-500 hover:shadow-md transition-all group"
+              onClick={() => handleLanguageClick(lang.code)}
+              className="relative bg-white p-5 rounded-2xl shadow-sm border
+             border-gray-100 flex flex-col items-center justify-center
+             hover:border-orange-500 hover:shadow-md transition-all
+             cursor-pointer group"
             >
-              {/* 🔊 Speaker */}
+              {/* 🔊 Speaker (does NOT select language) */}
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   speakLanguage(lang);
                 }}
-                className="absolute top-3 right-3 w-8 h-8 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center hover:bg-blue-100 hover:text-blue-600 transition"
+                className="absolute top-3 right-3 w-8 h-8 rounded-full
+               bg-slate-100 text-slate-500 flex items-center justify-center
+               hover:bg-blue-100 hover:text-blue-600 transition"
                 aria-label={`Speak ${lang.name}`}
               >
                 <i className="fa-solid fa-volume-high text-xs"></i>
               </button>
 
-              {/* Language Select */}
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleLanguageClick(lang.code);
-                }}
-                className="flex flex-col items-center justify-center"
-              >
-                <span className="text-lg font-bold text-gray-900 mb-1 group-hover:text-orange-600">
-                  {lang.nativeName}
-                </span>
-                <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest group-hover:text-orange-400">
-                  {lang.name}
-                </span>
-              </button>
+              <span className="text-lg font-bold text-gray-900 mb-1 group-hover:text-orange-600">
+                {lang.nativeName}
+              </span>
+
+              <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest group-hover:text-orange-400">
+                {lang.name}
+              </span>
             </div>
           ))}
 
@@ -143,35 +140,33 @@ const LanguageSelectionView: React.FC<LanguageSelectionViewProps> = ({
             otherLanguages.map((lang) => (
               <div
                 key={lang.code}
-                className="relative bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center justify-center hover:border-orange-500 hover:shadow-md transition-all group animate-in fade-in slide-in-from-bottom-2"
+                onClick={() => handleLanguageClick(lang.code)}
+                className="relative bg-white p-5 rounded-2xl shadow-sm border
+             border-gray-100 flex flex-col items-center justify-center
+             hover:border-orange-500 hover:shadow-md transition-all
+             cursor-pointer group"
               >
-                {/* 🔊 Speaker */}
+                {/* 🔊 Speaker (does NOT select language) */}
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
                     speakLanguage(lang);
                   }}
-                  className="absolute top-3 right-3 w-8 h-8 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center hover:bg-blue-100 hover:text-blue-600 transition"
+                  className="absolute top-3 right-3 w-8 h-8 rounded-full
+               bg-slate-100 text-slate-500 flex items-center justify-center
+               hover:bg-blue-100 hover:text-blue-600 transition"
                   aria-label={`Speak ${lang.name}`}
                 >
                   <i className="fa-solid fa-volume-high text-xs"></i>
                 </button>
 
-                {/* Language Select */}
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleLanguageClick(lang.code);
-                  }}
-                  className="flex flex-col items-center justify-center"
-                >
-                  <span className="text-lg font-bold text-gray-900 mb-1 group-hover:text-orange-600">
-                    {lang.nativeName}
-                  </span>
-                  <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest group-hover:text-orange-400">
-                    {lang.name}
-                  </span>
-                </button>
+                <span className="text-lg font-bold text-gray-900 mb-1 group-hover:text-orange-600">
+                  {lang.nativeName}
+                </span>
+
+                <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest group-hover:text-orange-400">
+                  {lang.name}
+                </span>
               </div>
             ))}
         </div>

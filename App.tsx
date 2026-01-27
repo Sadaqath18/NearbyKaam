@@ -11,6 +11,7 @@ import EmployerProfileDrawer from "./components/EmployerProfileDrawer";
 import { MOCK_JOBS, LANGUAGES } from "./constants";
 import { stopSpeaking, speakText } from "./services/geminiService";
 import { GoogleGenAI } from "@google/genai";
+import { LanguageCode, useLanguage } from "./context/LanguageContext";
 
 const App: React.FC = () => {
   /* ---------------- User ---------------- */
@@ -26,10 +27,10 @@ const App: React.FC = () => {
   });
 
   /* ---------------- Language (GLOBAL) ---------------- */
-  const [language, setLanguage] = useState<string>(
-    localStorage.getItem("nearbykaam_lang") || "en",
-  );
   const [isChangingLanguage, setIsChangingLanguage] = useState(false);
+  const [language, setLanguage] = useState<LanguageCode>(
+    (localStorage.getItem("nearbykaam_lang") as LanguageCode) || "en",
+  );
 
   /* ---------------- UI Flags ---------------- */
   const [isGuest, setIsGuest] = useState(false);
@@ -38,9 +39,8 @@ const App: React.FC = () => {
   const [showAuthModal, setShowAuthModal] = useState(false);
 
   /* ---------------- Language change (SINGLE SOURCE) ---------------- */
-  const changeLanguage = (lang: string) => {
-    setLanguage(lang);
-    localStorage.setItem("nearbykaam_lang", lang);
+  const changeLanguage = (lang: LanguageCode) => {
+    setLanguage(lang); // context owns persistence
     setIsChangingLanguage(false);
   };
 
@@ -221,7 +221,6 @@ const App: React.FC = () => {
           onLogin={handleLogin}
           onAdminLogin={(p) => handleLogin(UserRole.ADMIN, p)}
           onGuestAccess={() => setIsGuest(true)}
-          language={language}
           onChangeLanguage={() => setIsChangingLanguage(true)}
         />
       );
@@ -237,7 +236,6 @@ const App: React.FC = () => {
                 prev.map((j) => (j.id === id ? { ...j, isReported: true } : j)),
               );
             }}
-            language={language}
             onChangeLanguage={() => setIsChangingLanguage(true)}
             isGuest={isGuest}
             currentUser={currentUser}

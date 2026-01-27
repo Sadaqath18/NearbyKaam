@@ -12,6 +12,7 @@ import { CATEGORIES } from "../constants";
 import { EmployerProfile } from "../types";
 import { createEmptyEmployerProfile } from "../utils/employerProfile";
 import EmployerProfileDrawer from "../components/EmployerProfileDrawer";
+import { useLanguage } from "../context/LanguageContext";
 
 interface EmployerViewProps {
   onJobSubmit: (job: Job) => void;
@@ -47,6 +48,7 @@ const EmployerView: React.FC<EmployerViewProps> = ({
   currentUser,
   onLogout,
 }) => {
+  const { language } = useLanguage();
   const [employerProfile, setEmployerProfile] =
     useState<EmployerProfile | null>(null);
 

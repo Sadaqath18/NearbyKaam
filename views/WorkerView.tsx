@@ -6,12 +6,13 @@ import WorkerProfileDrawer from "../components/WorkerProfileDrawer";
 import { STATES_AND_CITIES, LANGUAGES } from "../constants";
 import { GoogleGenAI } from "@google/genai";
 import { parseJobSearch, speakText } from "../services/geminiService";
+import { useLanguage } from "../context/LanguageContext";
+
 import.meta.env.VITE_GEMINI_API_KEY;
 
 interface WorkerViewProps {
   jobs: Job[];
   onReport: (id: string) => void;
-  language: string;
   onChangeLanguage: () => void;
   isGuest: boolean;
   currentUser: User | null;
@@ -48,7 +49,6 @@ function calculateDistance(
 const WorkerView: React.FC<WorkerViewProps> = ({
   jobs: allJobs,
   onReport,
-  language,
   onChangeLanguage,
   isGuest,
   currentUser,
@@ -58,6 +58,7 @@ const WorkerView: React.FC<WorkerViewProps> = ({
   isProfileOpen,
   setIsProfileOpen,
 }) => {
+  const { language } = useLanguage();
   const [viewState, setViewState] = useState<"INDUSTRY_SELECT" | "JOB_FEED">(
     "INDUSTRY_SELECT",
   );
