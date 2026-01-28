@@ -30,8 +30,9 @@ let audioContext: AudioContext | null = null;
 
 function getAudioContext() {
   if (!audioContext) {
-    audioContext = new (window.AudioContext ||
-      (window as any).webkitAudioContext)({ sampleRate: 24000 });
+    audioContext = new (
+      window.AudioContext || (window as any).webkitAudioContext
+    )({ sampleRate: 24000 });
   }
   return audioContext;
 }
@@ -78,7 +79,7 @@ async function decodeAudioData(
   data: Uint8Array,
   ctx: AudioContext,
   sampleRate: number,
-  numChannels: number
+  numChannels: number,
 ): Promise<AudioBuffer> {
   const dataInt16 = new Int16Array(data.buffer);
   const frameCount = dataInt16.length / numChannels;
@@ -98,7 +99,7 @@ async function decodeAudioData(
  */
 export async function getJobReadoutText(
   job: Job,
-  langName: string
+  langName: string,
 ): Promise<string> {
   try {
     const prompt = `
@@ -110,8 +111,8 @@ export async function getJobReadoutText(
       - Employer: ${job.employerName}
       - Location: ${job.location.address}
       - Salary: ${job.salaryAmount} ${
-      job.salaryType === "MONTH" ? "per month" : "per day"
-    }
+        job.salaryType === "MONTH" ? "per month" : "per day"
+      }
 
       - Expiry: ${job.expiryDays} days remaining
       
@@ -120,11 +121,11 @@ export async function getJobReadoutText(
       2. Keep it under 25 words.
       3. Start with something friendly like "New job found!"
       4. Explicitly state: "The role is ${job.jobRole || job.title} at ${
-      job.employerName
-    } in ${job.location.address}."
+        job.employerName
+      } in ${job.location.address}."
       5. Explicitly state the salary: "The salary is ${job.salaryAmount} per ${
-      job.salaryType
-    }."
+        job.salaryType
+      }."
       6. Explicitly state the expiry: "This job expires in ${
         job.expiryDays
       } days."
@@ -149,7 +150,7 @@ export async function getJobReadoutText(
  */
 export async function speakText(
   text: string,
-  langCode: string = "en"
+  langCode: string = "en",
 ): Promise<void> {
   stopSpeaking();
 
@@ -182,7 +183,7 @@ export async function speakText(
         decode(base64Audio),
         ctx,
         24000,
-        1
+        1,
       );
 
       const source = ctx.createBufferSource();
@@ -215,7 +216,7 @@ export async function speakText(
 
 export async function parseJobSearch(
   query: string,
-  langName: string = "English"
+  langName: string = "English",
 ): Promise<VoiceSearchFilters> {
   try {
     const response = await ai.models.generateContent({

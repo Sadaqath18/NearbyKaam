@@ -6,8 +6,9 @@ import WorkerProfileDrawer from "../components/WorkerProfileDrawer";
 import { STATES_AND_CITIES, LANGUAGES } from "../constants";
 import { GoogleGenAI } from "@google/genai";
 import { parseJobSearch, speakText } from "../services/geminiService";
+import { JOB_CATEGORY_LABELS } from "../i18n/jobCategories";
+import { matchCategoryFromSpeech } from "../utils/voiceCategoryMatcher";
 import { useLanguage } from "../context/LanguageContext";
-
 import.meta.env.VITE_GEMINI_API_KEY;
 
 interface WorkerViewProps {
@@ -58,7 +59,6 @@ const WorkerView: React.FC<WorkerViewProps> = ({
   isProfileOpen,
   setIsProfileOpen,
 }) => {
-  const { language } = useLanguage();
   const [viewState, setViewState] = useState<"INDUSTRY_SELECT" | "JOB_FEED">(
     "INDUSTRY_SELECT",
   );
@@ -66,6 +66,8 @@ const WorkerView: React.FC<WorkerViewProps> = ({
     const saved = localStorage.getItem("nearbykaam_loc");
     return saved ? JSON.parse(saved) : null;
   });
+
+  const { language } = useLanguage();
 
   const [selectedCategory, setSelectedCategory] = useState<
     JobCategory | undefined
@@ -158,6 +160,86 @@ const WorkerView: React.FC<WorkerViewProps> = ({
       );
     }
   }, []);
+
+  const LANG_TO_LOCALE: Record<string, string> = {
+    en: "en-IN",
+    hi: "hi-IN",
+    ta: "ta-IN",
+    te: "te-IN",
+    kn: "kn-IN",
+    ml: "ml-IN",
+    mr: "mr-IN",
+    ur: "ur-IN",
+    gu: "gu-IN",
+    bn: "bn-IN",
+    pa: "pa-IN",
+    or: "or-IN",
+    as: "as-IN",
+    ne: "ne-IN",
+    ks: "ur-IN",
+    sd: "ur-IN",
+  };
+
+  // VOICE CATEGORY HANDLER
+  const handleVoiceCategory = () => {
+    const SpeechRecognition =
+      (window as any).SpeechRecognition ||
+      (window as any).webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      alert("Voice recognition not supported");
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = LANG_TO_LOCALE[language] ?? "en-IN";
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    recognition.onstart = () => {
+      setIsListening(true);
+      setVoiceStatus(language === "hi" ? "सुन रहा हूँ..." : "Listening...");
+    };
+
+    recognition.onresult = (event: any) => {
+      const spokenText = event.results[0][0].transcript.toLowerCase();
+
+      const matchedCategory = matchCategoryFromSpeech(spokenText, language);
+
+      if (matchedCategory) {
+        setSelectedCategory(matchedCategory);
+
+        const label =
+          JOB_CATEGORY_LABELS[matchedCategory].labels[language] ??
+          JOB_CATEGORY_LABELS[matchedCategory].labels.en;
+
+        speakText(label, language);
+
+        setTimeout(() => {
+          setViewState("JOB_FEED");
+        }, 400);
+      } else {
+        speakText(
+          language === "hi"
+            ? "श्रेणी समझ नहीं आई"
+            : "Sorry, I didn’t understand",
+          language,
+        );
+      }
+
+      setIsListening(false);
+    };
+
+    recognition.onerror = () => {
+      setIsListening(false);
+      speakText(
+        language === "hi" ? "दोबारा बोलिए" : "Please try again",
+        language,
+      );
+    };
+
+    recognition.start();
+  };
 
   const handleIndustrySelect = (cat: JobCategory) => {
     setSelectedCategory(cat);
@@ -334,6 +416,15 @@ const WorkerView: React.FC<WorkerViewProps> = ({
   if (viewState === "INDUSTRY_SELECT") {
     return (
       <div className="flex-1 flex flex-col h-full bg-slate-50 relative">
+        <button
+          title="Tap and speak category"
+          onClick={handleVoiceCategory}
+          className="w-12 h-12 bg-white/20 rounded-full flex items-center
+             justify-center text-white animate-pulse active:scale-95"
+        >
+          <i className="fa-solid fa-microphone"></i>
+        </button>
+
         <WorkerProfileDrawer
           isOpen={isProfileOpen}
           onClose={() => setIsProfileOpen(false)}
@@ -344,38 +435,52 @@ const WorkerView: React.FC<WorkerViewProps> = ({
             currentUser?.isAuthenticated && !currentUser.profileCompleted
           }
         />
-        <div className="bg-orange-500 px-6 pb-8 rounded-b-[48px] shadow-lg z-20 pt-12">
-          <div className="flex justify-between items-center mb-6">
-            <h1 className="text-2xl font-black text-white leading-none">
-              NearbyKaam
-            </h1>
-            <div className="flex items-center gap-3">
-              <button
-                title="Switch display language"
-                onClick={onChangeLanguage}
-                className="w-10 h-10 bg-white/20 rounded-[15px] flex items-center justify-center text-white active:scale-95 transition-transform"
-              >
-                <i className="fa-solid fa-globe"></i>
-              </button>
-              <button
-                title={isGuest ? "Exit guest view" : "Sign out from account"}
-                onClick={onLogout}
-                className="w-10 h-10 bg-white/20 rounded-[15px] border border-white/30 flex items-center justify-center text-white active:scale-95 transition-transform"
-              >
-                <i className="fa-solid fa-right-from-bracket"></i>
-              </button>
+        <div className="flex-1 flex flex-col h-full bg-slate-50 relative">
+          <div className="bg-orange-500 px-6 pt-6 pb-8 rounded-b-[48px] shadow-lg z-20">
+            <div className="flex justify-between items-center mb-6">
+              <h1 className="text-2xl font-black text-white leading-none">
+                NearbyKaam
+              </h1>
+
+              <div className="flex items-center gap-3">
+                <button
+                  title="Tap and speak category"
+                  onClick={handleVoiceCategory}
+                  className={`w-10 h-10 rounded-full flex items-center justify-center
+    ${
+      isListening
+        ? "bg-white text-orange-500 animate-pulse"
+        : "bg-white/20 text-white"
+    }`}
+                >
+                  <i className="fa-solid fa-microphone"></i>
+                </button>
+                <button
+                  title="Switch display language"
+                  onClick={onChangeLanguage}
+                  className="w-10 h-10 bg-white/20 rounded-[15px] flex items-center justify-center text-white active:scale-95 transition-transform"
+                >
+                  <i className="fa-solid fa-globe"></i>
+                </button>
+                <button
+                  title={isGuest ? "Exit guest view" : "Sign out from account"}
+                  onClick={onLogout}
+                  className="w-10 h-10 bg-white/20 rounded-[15px] border border-white/30 flex items-center justify-center text-white active:scale-95 transition-transform"
+                >
+                  <i className="fa-solid fa-right-from-bracket"></i>
+                </button>
+              </div>
+            </div>
+            <div className="text-white/80 text-xs font-bold uppercase tracking-widest px-2">
+              Select Category to Start
             </div>
           </div>
-          <div className="text-white/80 text-xs font-bold uppercase tracking-widest px-2">
-            Select Industry to Start
+          <div className="flex-1 overflow-y-auto px-6 py-10 no-scrollbar">
+            <CategoryGrid
+              onSelect={handleIndustrySelect}
+              selected={selectedCategory}
+            />
           </div>
-        </div>
-        <div className="flex-1 overflow-y-auto px-6 py-10 no-scrollbar">
-          <CategoryGrid
-            onSelect={handleIndustrySelect}
-            selected={selectedCategory}
-            layout="grid"
-          />
         </div>
       </div>
     );
@@ -415,6 +520,7 @@ const WorkerView: React.FC<WorkerViewProps> = ({
             >
               <i className="fa-solid fa-globe text-xs"></i>
             </button>
+
             <button
               title="View your profile and resume"
               onClick={() => setIsProfileOpen(true)}
