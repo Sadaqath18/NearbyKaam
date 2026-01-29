@@ -78,6 +78,7 @@ const WorkerView: React.FC<WorkerViewProps> = ({
   const [voiceStatus, setVoiceStatus] = useState("");
   const [interimTranscript, setInterimTranscript] = useState("");
   const [showAuthPrompt, setShowAuthPrompt] = useState(false);
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
 
   const [userLocation, setUserLocation] = useState<Location | null>(() => {
     const saved = localStorage.getItem("nearbykaam_loc");
@@ -103,6 +104,16 @@ const WorkerView: React.FC<WorkerViewProps> = ({
     createdAt: new Date().toISOString(),
   });
 
+  const isProfileComplete = (profile: WorkerProfile | null) => {
+    if (!profile) return false;
+
+    return (
+      profile.name?.trim() &&
+      profile.preferredJobTitle?.trim() &&
+      profile.jobType
+    );
+  };
+
   const [profile, setProfile] = useState<WorkerProfile>(() => {
     if (!currentUser?.phone) {
       return getEmptyWorkerProfile("");
@@ -114,6 +125,17 @@ const WorkerView: React.FC<WorkerViewProps> = ({
 
     return saved ? JSON.parse(saved) : getEmptyWorkerProfile(currentUser.phone);
   });
+
+  // 🔐 Profile completion gate
+  const mustCompleteProfile =
+    !isGuest && currentUser !== null && !isProfileComplete(profile);
+
+    useEffect(() => {
+  if (mustCompleteProfile) {
+    setIsProfileOpen(true);
+  }
+}, [mustCompleteProfile]);
+
 
   useEffect(() => {
     if (!currentUser?.phone) return;
@@ -424,20 +446,30 @@ const WorkerView: React.FC<WorkerViewProps> = ({
     onProfileCompleted();
     setIsProfileOpen(false);
   };
+  const handleExitToGuest = () => {
+    setShowExitConfirm(false);
+    setIsProfileOpen(false);
+    onAuthRequired(); // OR setGuestMode(true)
+  };
 
   return (
     <div className="relative max-w-md mx-auto flex flex-col h-full bg-white overflow-hidden">
       {/* PROFILE DRAWER */}
       <WorkerProfileDrawer
         isOpen={isProfileOpen}
-        onClose={() => setIsProfileOpen(false)}
         profile={profile}
         onSave={handleSaveProfile}
         onChangeLanguage={onChangeLanguage}
+        forceComplete={mustCompleteProfile}
+         onExitRequest={() => setShowExitConfirm(true)}   // forced flow
+  onClose={() => setIsProfileOpen(false)}          // normal close
+      
       />
 
       {/*MAIN CONTENT */}
-      <div className="flex-1 overflow-hidden">
+      <div
+        className="flex-1 overflow-hidden"
+      >
         {viewState === "INDUSTRY_SELECT" ? (
           /* CATEGORY SELECTION VIEW */
           <div className="flex-1 flex flex-col h-full bg-slate-50">
@@ -448,17 +480,31 @@ const WorkerView: React.FC<WorkerViewProps> = ({
                   NearbyKaam
                 </h1>
 
-                <button
-                  title="Tap and speak category"
-                  onClick={handleVoiceCategory}
-                  className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                    isListening
-                      ? "bg-white text-orange-500 animate-pulse"
-                      : "bg-white/20 text-white"
-                  }`}
-                >
-                  <i className="fa-solid fa-microphone"></i>
-                </button>
+                <div className="flex items-center gap-3">
+                  {/* Mic */}
+                  <button
+                    title="Tap and speak category"
+                    onClick={handleVoiceCategory}
+                    className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                      isListening
+                        ? "bg-white text-orange-500 animate-pulse"
+                        : "bg-white/20 text-white"
+                    }`}
+                  >
+                    <i className="fa-solid fa-microphone"></i>
+                  </button>
+
+                  {/* Sign out */}
+                  <button
+                    title={
+                      isGuest ? "Exit guest view" : "Sign out from account"
+                    }
+                    onClick={onLogout}
+                    className="w-10 h-10 bg-white/20 rounded-[15px] border border-white/30 flex items-center justify-center text-white active:scale-95 transition-transform"
+                  >
+                    <i className="fa-solid fa-right-from-bracket"></i>
+                  </button>
+                </div>
               </div>
 
               <div className="text-white/80 text-xs font-bold uppercase tracking-widest px-2">
@@ -508,6 +554,46 @@ const WorkerView: React.FC<WorkerViewProps> = ({
                   </button>
                 </div>
               </div>
+              {showExitConfirm && (
+                <div className="fixed inset-0 z-[800] bg-black/60 backdrop-blur-sm flex items-center justify-center p-6">
+                  <div className="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl text-center animate-in zoom-in-95">
+                    <div className="w-14 h-14 bg-orange-50 text-orange-500 rounded-full flex items-center justify-center text-2xl mx-auto mb-4">
+                      <i className="fa-solid fa-user-lock"></i>
+                    </div>
+
+                    <h3 className="text-lg font-black text-gray-900 mb-2">
+                      Complete profile required
+                    </h3>
+
+                    <p className="text-xs text-gray-500 font-medium leading-relaxed mb-6">
+                      To apply for jobs, you need to complete your profile. You
+                      can still browse jobs as a guest.
+                    </p>
+
+                    <div className="flex flex-col gap-3">
+                      {/* Continue Profile */}
+                      <button
+                        onClick={() => setShowExitConfirm(false)}
+                        className="w-full py-4 bg-orange-500 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest"
+                      >
+                        Continue Profile
+                      </button>
+
+                      {/* Exit to Guest */}
+                      <button
+                        onClick={() => {
+                          setShowExitConfirm(false);
+                          setIsProfileOpen(false);
+                          onAuthRequired(); // switch to guest flow
+                        }}
+                        className="w-full py-4 bg-white border border-gray-200 text-gray-400 rounded-2xl font-black uppercase text-[10px] tracking-widest"
+                      >
+                        Browse as Guest
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <h1 className="text-2xl font-black text-slate-900 leading-tight mb-6">
                 Let's Find Job

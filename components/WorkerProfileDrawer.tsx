@@ -4,10 +4,14 @@ import { CATEGORIES } from "../constants";
 
 interface WorkerProfileDrawerProps {
   isOpen: boolean;
-  onClose: () => void;
+  onClose?: () => void;
+ onExitRequest?: () => void;
   profile: WorkerProfile;
   onSave: (p: WorkerProfile) => void;
   onChangeLanguage: () => void;
+  isMandatory?: boolean; // Field-level (validation, asterisks, errors)
+
+  forceComplete?: boolean; //  Flow-level (cannot close / cannot skip)
   isMandatory?: boolean;
 }
 
@@ -16,7 +20,7 @@ const getEmptyWorkerProfile = (phone: string): WorkerProfile => ({
   name: "",
   email: "",
   preferredJobTitle: "",
-  jobType: "" as unknown as JobCategory,
+  jobType: undefined as unknown as JobCategory,
   expectedSalary: undefined,
   expectedSalaryType: undefined,
   location: undefined,
@@ -37,6 +41,7 @@ const WorkerProfileDrawer: React.FC<WorkerProfileDrawerProps> = ({
   onSave,
   onChangeLanguage,
   isMandatory = false,
+  forceComplete = false,
 }) => {
   const [localProfile, setLocalProfile] = useState<WorkerProfile>(() =>
     getEmptyWorkerProfile(profile.phone),
@@ -214,7 +219,7 @@ const WorkerProfileDrawer: React.FC<WorkerProfileDrawerProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-[400] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-[400] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200 pointer-events-auto">
       <div className="bg-white w-full max-w-md rounded-t-[40px] sm:rounded-[40px] p-8 shadow-2xl animate-in slide-in-from-bottom-10 duration-300 max-h-[90vh] overflow-y-auto no-scrollbar">
         {!isMandatory && (
           <div className="w-12 h-1.5 bg-gray-100 rounded-full mx-auto mb-8 sm:hidden"></div>
@@ -237,15 +242,18 @@ const WorkerProfileDrawer: React.FC<WorkerProfileDrawerProps> = ({
               </span>
             </div>
           </div>
-          {!isMandatory && (
-            <button
-              title="Close profile settings"
-              onClick={onClose}
-              className="w-10 h-10 bg-gray-50 rounded-full flex items-center justify-center text-gray-400 active:scale-90 transition-all"
-            >
-              <i className="fa-solid fa-xmark"></i>
-            </button>
-          )}
+
+        {forceComplete && onExitRequest && (
+  <button
+    title="Exit to guest mode"
+    onClick={onExitRequest}
+    className="w-10 h-10 bg-gray-50 rounded-full flex items-center justify-center text-gray-400 active:scale-90 transition-all"
+  >
+    <i className="fa-solid fa-xmark"></i>
+  </button>
+)}
+
+
         </div>
 
         {errors.length > 0 && (
@@ -519,7 +527,7 @@ const WorkerProfileDrawer: React.FC<WorkerProfileDrawerProps> = ({
                         </p>
                       </div>
                     </div>
-                    <button
+      <button
                       title="Remove document"
                       onClick={removeDocument}
                       className="text-red-400 p-2"
