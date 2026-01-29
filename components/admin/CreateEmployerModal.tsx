@@ -73,7 +73,7 @@ const CreateEmployerModal: React.FC<Props> = ({ onCreate, onClose }) => {
 
           <input
             aria-label="Industry"
-            placeholder="Industry (Hotel, Garage, Shop...)"
+            placeholder="Industry (Hospitality, Automobile, Shop...)"
             value={industry}
             onChange={(e) => setIndustry(e.target.value)}
             className="w-full border border-slate-300 rounded-xl p-3 text-sm font-bold"

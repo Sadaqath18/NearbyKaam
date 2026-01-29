@@ -224,7 +224,7 @@ export async function parseJobSearch(
       contents: [{ parts: [{ text: `User Query: "${query}"` }] }],
       config: {
         systemInstruction: `The user query is in ${langName}. Extract job intent for NearbyKaam.
-      Categories: HOTEL, SHOP, GARAGE, DELIVERY, CONSTRUCTION, HOUSE_HELP, SECURITY, OTHER.
+      Categories: Hospitality, SHOP, Automobile, Delivery & Logistics, CONSTRUCTION, HOUSE_HELP, SECURITY, OTHER.
       Return JSON with category, keyword, and a short intentSummary in ${langName}.`,
         responseMimeType: "application/json",
         responseSchema: {

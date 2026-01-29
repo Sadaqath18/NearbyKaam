@@ -19,12 +19,12 @@ const SALARY_TYPES: SalaryType[] = ["DAY", "MONTH"];
 
 const COMMON_JOB_ROLES = [
   "Helper",
-  "Delivery Boy",
+  "Delivery & Logistics Boy",
   "Sales Boy",
   "Cleaner",
   "Cook",
   "Driver",
-  "Security Guard",
+  "Security",
   "Warehouse Staff",
   "Electrician",
   "Plumber",

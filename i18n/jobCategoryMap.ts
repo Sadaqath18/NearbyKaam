@@ -1,10 +1,10 @@
 import { JobCategory } from "../types";
 
 export const CATEGORY_KEY_MAP = {
-  HOTEL: JobCategory.HOTEL,
+  Hospitality: JobCategory.Hospitality,
   CONSTRUCTION: JobCategory.CONSTRUCTION,
-  DELIVERY: JobCategory.DELIVERY,
-  GARAGE: JobCategory.GARAGE,
+  Delivery & Logistics: JobCategory.Delivery & Logistics,
+  Automobile: JobCategory.Automobile,
   HOUSE_HELP: JobCategory.HOUSE_HELP,
   SECURITY: JobCategory.SECURITY,
   SHOP: JobCategory.SHOP,

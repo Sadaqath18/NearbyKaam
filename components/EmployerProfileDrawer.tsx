@@ -10,9 +10,9 @@ interface EmployerProfileDrawerProps {
 }
 
 const INDUSTRY_OPTIONS = [
-  "Hotel / Restaurant",
+  "Hospitality / Restaurant",
   "Retail / Shop",
-  "Automobile / Garage",
+  "Automobile / Automobile",
   "Construction",
   "Factory / Warehouse",
   "Logistics",

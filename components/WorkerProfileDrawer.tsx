@@ -353,7 +353,7 @@ const WorkerProfileDrawer: React.FC<WorkerProfileDrawerProps> = ({
                   type="text"
                   title="The specific role you are looking for"
                   className="w-full bg-gray-50 border-0 rounded-2xl p-4 font-bold text-gray-800 placeholder:text-gray-300 focus:ring-2 focus:ring-orange-500"
-                  placeholder="e.g. Delivery Executive, Personal Cook, Guard"
+                  placeholder="e.g. Delivery & Logistics Executive, Personal Cook, Guard"
                   value={localProfile.preferredJobTitle}
                   onChange={(e) =>
                     setLocalProfile({

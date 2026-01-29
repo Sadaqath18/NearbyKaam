@@ -40,6 +40,9 @@ const AuthView: React.FC<AuthViewProps> = ({
   const [speakingRole, setSpeakingRole] = useState<SpeakingRole>(null);
 
   const recognitionRef = useRef<any>(null);
+  // const handleAuthRequired = () => {
+  //   setAuthView("PHONE_INPUT");
+  // }
 
   /* ---------------- TTS (SPEAK ROLE) ---------------- */
 

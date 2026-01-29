@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Job, JobCategory, Location, WorkerProfile, User } from "../types";
 import CategoryGrid from "../components/CategoryGrid";
 import JobCard from "../components/JobCard";
@@ -23,6 +23,7 @@ interface WorkerViewProps {
   isProfileOpen: boolean;
   setIsProfileOpen: (open: boolean) => void;
 }
+type FooterTab = "HOME" | "JOBS" | "PROFILE";
 
 const DISTANCE_OPTIONS = [1, 2, 5, 10, 20, 30];
 const EXPERIENCE_OPTIONS = ["All", "Entry Level", "1-2 Years", "3+ Years"];
@@ -59,16 +60,13 @@ const WorkerView: React.FC<WorkerViewProps> = ({
   isProfileOpen,
   setIsProfileOpen,
 }) => {
+  const { language } = useLanguage();
+
   const [viewState, setViewState] = useState<"INDUSTRY_SELECT" | "JOB_FEED">(
     "INDUSTRY_SELECT",
   );
-  const [userLocation, setUserLocation] = useState<Location | null>(() => {
-    const saved = localStorage.getItem("nearbykaam_loc");
-    return saved ? JSON.parse(saved) : null;
-  });
 
-  const { language } = useLanguage();
-
+  const [activeTab, setActiveTab] = useState<FooterTab>("HOME");
   const [selectedCategory, setSelectedCategory] = useState<
     JobCategory | undefined
   >();
@@ -79,6 +77,12 @@ const WorkerView: React.FC<WorkerViewProps> = ({
   const [isListening, setIsListening] = useState(false);
   const [voiceStatus, setVoiceStatus] = useState("");
   const [interimTranscript, setInterimTranscript] = useState("");
+  const [showAuthPrompt, setShowAuthPrompt] = useState(false);
+
+  const [userLocation, setUserLocation] = useState<Location | null>(() => {
+    const saved = localStorage.getItem("nearbykaam_loc");
+    return saved ? JSON.parse(saved) : null;
+  });
 
   const getEmptyWorkerProfile = (phone: string): WorkerProfile => ({
     phone,
@@ -192,7 +196,7 @@ const WorkerView: React.FC<WorkerViewProps> = ({
     }
 
     const recognition = new SpeechRecognition();
-    recognition.lang = LANG_TO_LOCALE[language] ?? "en-IN";
+    recognition.lang = LANG_TO_LOCALE[language] || "en-IN";
     recognition.interimResults = false;
     recognition.maxAlternatives = 1;
 
@@ -241,10 +245,18 @@ const WorkerView: React.FC<WorkerViewProps> = ({
     recognition.start();
   };
 
+  {
+    /* INDUSTRY/CATEGORY SELECT HANDLER */
+  }
   const handleIndustrySelect = (cat: JobCategory) => {
     setSelectedCategory(cat);
     setViewState("JOB_FEED");
+    setActiveTab("JOBS");
   };
+
+  {
+    /*JOB FILTERS*/
+  }
 
   const processedJobs = useMemo(() => {
     let list = allJobs.filter(
@@ -264,7 +276,7 @@ const WorkerView: React.FC<WorkerViewProps> = ({
       list = list.filter((j) => (j.distance || 0) <= maxDistance);
     }
 
-    if (selectedCategory && selectedCategory !== JobCategory.OTHER) {
+    if (selectedCategory) {
       list = list.filter((j) => j.category === selectedCategory);
     }
 
@@ -413,81 +425,9 @@ const WorkerView: React.FC<WorkerViewProps> = ({
     setIsProfileOpen(false);
   };
 
-  if (viewState === "INDUSTRY_SELECT") {
-    return (
-      <div className="flex-1 flex flex-col h-full bg-slate-50 relative">
-        <button
-          title="Tap and speak category"
-          onClick={handleVoiceCategory}
-          className="w-12 h-12 bg-white/20 rounded-full flex items-center
-             justify-center text-white animate-pulse active:scale-95"
-        >
-          <i className="fa-solid fa-microphone"></i>
-        </button>
-
-        <WorkerProfileDrawer
-          isOpen={isProfileOpen}
-          onClose={() => setIsProfileOpen(false)}
-          profile={profile}
-          onSave={handleSaveProfile}
-          onChangeLanguage={onChangeLanguage}
-          isMandatory={
-            currentUser?.isAuthenticated && !currentUser.profileCompleted
-          }
-        />
-        <div className="flex-1 flex flex-col h-full bg-slate-50 relative">
-          <div className="bg-orange-500 px-6 pt-6 pb-8 rounded-b-[48px] shadow-lg z-20">
-            <div className="flex justify-between items-center mb-6">
-              <h1 className="text-2xl font-black text-white leading-none">
-                NearbyKaam
-              </h1>
-
-              <div className="flex items-center gap-3">
-                <button
-                  title="Tap and speak category"
-                  onClick={handleVoiceCategory}
-                  className={`w-10 h-10 rounded-full flex items-center justify-center
-    ${
-      isListening
-        ? "bg-white text-orange-500 animate-pulse"
-        : "bg-white/20 text-white"
-    }`}
-                >
-                  <i className="fa-solid fa-microphone"></i>
-                </button>
-                <button
-                  title="Switch display language"
-                  onClick={onChangeLanguage}
-                  className="w-10 h-10 bg-white/20 rounded-[15px] flex items-center justify-center text-white active:scale-95 transition-transform"
-                >
-                  <i className="fa-solid fa-globe"></i>
-                </button>
-                <button
-                  title={isGuest ? "Exit guest view" : "Sign out from account"}
-                  onClick={onLogout}
-                  className="w-10 h-10 bg-white/20 rounded-[15px] border border-white/30 flex items-center justify-center text-white active:scale-95 transition-transform"
-                >
-                  <i className="fa-solid fa-right-from-bracket"></i>
-                </button>
-              </div>
-            </div>
-            <div className="text-white/80 text-xs font-bold uppercase tracking-widest px-2">
-              Select Category to Start
-            </div>
-          </div>
-          <div className="flex-1 overflow-y-auto px-6 py-10 no-scrollbar">
-            <CategoryGrid
-              onSelect={handleIndustrySelect}
-              selected={selectedCategory}
-            />
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="flex flex-col h-full bg-white relative animate-in slide-in-from-right-10 duration-300">
+    <div className="relative max-w-md mx-auto flex flex-col h-full bg-white overflow-hidden">
+      {/* PROFILE DRAWER */}
       <WorkerProfileDrawer
         isOpen={isProfileOpen}
         onClose={() => setIsProfileOpen(false)}
@@ -496,273 +436,410 @@ const WorkerView: React.FC<WorkerViewProps> = ({
         onChangeLanguage={onChangeLanguage}
       />
 
-      <div className="px-6 pt-14 pb-4 bg-white sticky top-0 z-40 border-b border-slate-50 shadow-sm">
-        <div className="flex justify-between items-center mb-6">
-          <button
-            title="Change industry filter"
-            onClick={() => setViewState("INDUSTRY_SELECT")}
-            className="w-10 h-10 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-400 active:scale-90 transition-transform"
-          >
-            <i className="fa-solid fa-chevron-left text-sm"></i>
-          </button>
-          <div className="flex items-center gap-3">
-            <button
-              title={isGuest ? "Exit browse mode" : "Logout account"}
-              onClick={onLogout}
-              className="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400 active:bg-slate-100 transition-colors"
-            >
-              <i className="fa-solid fa-right-from-bracket text-xs"></i>
-            </button>
-            <button
-              title="Switch app language"
-              onClick={onChangeLanguage}
-              className="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-300 active:bg-slate-100 transition-colors"
-            >
-              <i className="fa-solid fa-globe text-xs"></i>
-            </button>
+      {/*MAIN CONTENT */}
+      <div className="flex-1 overflow-hidden">
+        {viewState === "INDUSTRY_SELECT" ? (
+          /* CATEGORY SELECTION VIEW */
+          <div className="flex-1 flex flex-col h-full bg-slate-50">
+            {/* HEADER */}
+            <div className="bg-orange-500 px-6 pt-6 pb-8 rounded-b-[48px] shadow-lg z-20">
+              <div className="flex justify-between items-center mb-6">
+                <h1 className="text-2xl font-black text-white leading-none">
+                  NearbyKaam
+                </h1>
 
-            <button
-              title="View your profile and resume"
-              onClick={() => setIsProfileOpen(true)}
-              className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600 font-black text-sm active:scale-90 transition-transform"
-            >
-              {profile.name ? profile.name[0].toUpperCase() : "U"}
-            </button>
-          </div>
-        </div>
-
-        <h1 className="text-2xl font-black text-slate-900 leading-tight mb-6">
-          Let's Find Job
-        </h1>
-
-        <div className="space-y-3">
-          <div className="bg-slate-50 border border-slate-100 rounded-2xl flex items-center px-4 py-1">
-            <i className="fa-solid fa-magnifying-glass text-slate-300 mr-3 text-sm"></i>
-            <input
-              type="text"
-              title="Type here to search jobs"
-              placeholder="e.g. Driver, Waiter, Guard"
-              className="flex-1 bg-transparent py-3.5 text-sm font-medium outline-none text-slate-700 placeholder:text-slate-300"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-            <button
-              title="Search by speaking"
-              onClick={startVoiceSearch}
-              className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
-                isListening
-                  ? "bg-orange-500 text-white animate-pulse"
-                  : "text-slate-300 active:text-indigo-600"
-              }`}
-            >
-              <i className="fa-solid fa-microphone"></i>
-            </button>
-          </div>
-
-          <div className="bg-slate-50 border border-slate-100 rounded-2xl flex items-center px-4 py-1">
-            <i className="fa-solid fa-location-dot text-indigo-400 mr-3 text-sm"></i>
-            <input
-              type="text"
-              readOnly
-              onClick={() => setIsLocationPickerOpen(true)}
-              placeholder="Search by area or city"
-              className="flex-1 bg-transparent py-3.5 text-sm font-medium outline-none cursor-pointer text-slate-700 placeholder:text-slate-300"
-              value={userLocation?.address || ""}
-              title="Select or change your work location"
-            />
-            <button
-              title="Open location filter"
-              onClick={() => setIsLocationPickerOpen(true)}
-              className="text-slate-300 ml-2 p-1 active:text-indigo-600"
-            >
-              <i className="fa-solid fa-chevron-down text-[10px]"></i>
-            </button>
-          </div>
-
-          <div className="flex gap-2 overflow-x-auto no-scrollbar py-2">
-            {EXPERIENCE_OPTIONS.map((exp) => (
-              <button
-                key={exp}
-                title={`Only show ${exp} jobs`}
-                onClick={() => setSelectedExperience(exp)}
-                className={`shrink-0 px-4 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all border-2 ${
-                  selectedExperience === exp
-                    ? "bg-indigo-600 border-indigo-600 text-white shadow-lg"
-                    : "bg-white border-slate-100 text-slate-400 hover:border-slate-200 active:bg-slate-50"
-                }`}
-              >
-                {exp}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      <div className="flex-1 overflow-y-auto px-6 pb-24 no-scrollbar bg-white">
-        <div className="flex justify-between items-center mb-6 mt-6">
-          <h2 className="font-black text-slate-900 text-sm uppercase tracking-tighter">
-            Recommended jobs
-          </h2>
-          <div className="flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 rounded-full border border-slate-100">
-            <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-pulse"></div>
-            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
-              {processedJobs.length} Results
-            </span>
-          </div>
-        </div>
-
-        <div className="space-y-4">
-          {processedJobs.map((job) => (
-            <JobCard
-              key={job.id}
-              job={job}
-              onReport={onReport}
-              language={language}
-              isGuest={isGuest}
-              onAuthRequired={onAuthRequired}
-            />
-          ))}
-
-          {processedJobs.length === 0 && (
-            <div className="py-20 text-center">
-              <div className="w-20 h-20 bg-slate-50 rounded-[40px] flex items-center justify-center mx-auto mb-6 text-slate-200">
-                <i className="fa-solid fa-magnifying-glass text-3xl"></i>
+                <button
+                  title="Tap and speak category"
+                  onClick={handleVoiceCategory}
+                  className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                    isListening
+                      ? "bg-white text-orange-500 animate-pulse"
+                      : "bg-white/20 text-white"
+                  }`}
+                >
+                  <i className="fa-solid fa-microphone"></i>
+                </button>
               </div>
-              <p className="font-black uppercase text-xs text-slate-400 tracking-widest leading-relaxed px-10">
-                No jobs matching your criteria. Try changing filters.
-              </p>
-              <button
-                title="Remove all search and distance filters"
-                onClick={() => {
-                  setSelectedExperience("All");
-                  setMaxDistance(30);
-                  setSearchQuery("");
-                }}
-                className="mt-8 text-indigo-600 font-black text-[10px] uppercase tracking-widest border-b-2 border-indigo-100 active:text-indigo-800"
-              >
-                Reset all filters
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
 
-      {isListening && (
-        <div className="fixed inset-0 z-[600] bg-slate-900/90 backdrop-blur-md flex flex-col items-center justify-center p-12 text-center animate-in fade-in duration-300">
-          <div className="relative mb-12">
-            <div className="absolute inset-0 bg-orange-500 rounded-full blur-2xl opacity-20 animate-pulse"></div>
-            <div className="w-24 h-24 bg-orange-500 rounded-full flex items-center justify-center text-white text-4xl shadow-2xl relative z-10 animate-bounce">
-              <i className="fa-solid fa-microphone"></i>
+              <div className="text-white/80 text-xs font-bold uppercase tracking-widest px-2">
+                Select Category to Start
+              </div>
+            </div>
+
+            {/* CATEGORY GRID */}
+            <div className="flex-1 overflow-y-auto px-6 py-10 pb-[96px] no-scrollbar">
+              <CategoryGrid
+                onSelect={handleIndustrySelect}
+                selected={selectedCategory}
+              />
             </div>
           </div>
-          <h2 className="text-2xl font-black text-white mb-2 uppercase tracking-tight">
-            {voiceStatus}
-          </h2>
-          <p className="text-orange-400 font-bold text-lg h-8 animate-in slide-in-from-bottom-2 duration-300">
-            {interimTranscript || 'Try saying "Cook jobs in Mumbai"'}
-          </p>
-          <button
-            title="Cancel voice input"
-            onClick={() => setIsListening(false)}
-            className="mt-16 w-14 h-14 bg-white/10 rounded-full flex items-center justify-center text-white active:scale-90 transition-all border border-white/20"
-          >
-            <i className="fa-solid fa-xmark"></i>
-          </button>
-        </div>
-      )}
+        ) : (
+          <div>
+            {/* HEADER & FILTERS */}
+            <div className="px-6 pt-14 pb-4 bg-white sticky top-0 z-40 border-b border-slate-50 shadow-sm">
+              <div className="flex justify-between items-center mb-6">
+                <button
+                  title="Change industry filter"
+                  onClick={() => {
+                    setViewState("INDUSTRY_SELECT");
+                    setActiveTab("HOME");
+                  }}
+                  className="w-10 h-10 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-400 active:scale-90 transition-transform"
+                >
+                  <i className="fa-solid fa-chevron-left text-sm"></i>
+                </button>
 
-      {isLocationPickerOpen && (
-        <div className="fixed inset-0 z-[500] bg-black/60 backdrop-blur-md flex items-end sm:items-center justify-center p-4">
-          <div className="bg-white w-full max-w-md rounded-[40px] p-8 shadow-2xl animate-in slide-in-from-bottom-10 duration-300 flex flex-col">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-black text-slate-900">
-                Search Filter
-              </h2>
-              <button
-                title="Close filter settings"
-                onClick={() => setIsLocationPickerOpen(false)}
-                className="w-10 h-10 bg-slate-50 rounded-full flex items-center justify-center text-slate-400 active:scale-90 transition-transform"
-              >
-                <i className="fa-solid fa-xmark"></i>
-              </button>
-            </div>
-
-            <div className="mb-8">
-              <p className="text-[10px] font-black text-slate-400 uppercase mb-3 tracking-widest">
-                Search Distance
-              </p>
-              <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
-                {DISTANCE_OPTIONS.map((d) => (
+                <div className="flex items-center gap-3">
                   <button
-                    key={d}
-                    title={`Filter by jobs within ${d}km`}
-                    onClick={() => setMaxDistance(d)}
-                    className={`shrink-0 px-6 py-3 rounded-2xl text-xs font-black transition-all border-2 ${
-                      maxDistance === d
-                        ? "bg-indigo-600 border-indigo-600 text-white shadow-lg"
-                        : "bg-white border-slate-100 text-slate-400 hover:border-slate-200 active:bg-slate-50"
+                    title={isGuest ? "Exit browse mode" : "Logout account"}
+                    onClick={onLogout}
+                    className="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400 active:bg-slate-100 transition-colors"
+                  >
+                    <i className="fa-solid fa-right-from-bracket text-xs"></i>
+                  </button>
+
+                  <button
+                    title="Switch app language"
+                    onClick={onChangeLanguage}
+                    className="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-300 active:bg-slate-100 transition-colors"
+                  >
+                    <i className="fa-solid fa-globe text-xs"></i>
+                  </button>
+                </div>
+              </div>
+
+              <h1 className="text-2xl font-black text-slate-900 leading-tight mb-6">
+                Let's Find Job
+              </h1>
+
+              <div className="space-y-3">
+                <div className="bg-slate-50 border border-slate-100 rounded-2xl flex items-center px-4 py-1">
+                  <i className="fa-solid fa-magnifying-glass text-slate-300 mr-3 text-sm"></i>
+                  <input
+                    type="text"
+                    title="Type here to search jobs"
+                    placeholder="e.g. Driver, Waiter, Guard"
+                    className="flex-1 bg-transparent py-3.5 text-sm font-medium outline-none text-slate-700 placeholder:text-slate-300"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                  <button
+                    title="Search by speaking"
+                    onClick={startVoiceSearch}
+                    className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
+                      isListening
+                        ? "bg-orange-500 text-white animate-pulse"
+                        : "text-slate-300 active:text-indigo-600"
                     }`}
                   >
-                    {d} KM
+                    <i className="fa-solid fa-microphone"></i>
                   </button>
-                ))}
+                </div>
+
+                <div className="bg-slate-50 border border-slate-100 rounded-2xl flex items-center px-4 py-1">
+                  <i className="fa-solid fa-location-dot text-indigo-400 mr-3 text-sm"></i>
+                  <input
+                    type="text"
+                    readOnly
+                    onClick={() => setIsLocationPickerOpen(true)}
+                    placeholder="Search by area or city"
+                    className="flex-1 bg-transparent py-3.5 text-sm font-medium outline-none cursor-pointer text-slate-700 placeholder:text-slate-300"
+                    value={userLocation?.address || ""}
+                    title="Select or change your work location"
+                  />
+                  <button
+                    title="Open location filter"
+                    onClick={() => setIsLocationPickerOpen(true)}
+                    className="text-slate-300 ml-2 p-1 active:text-indigo-600"
+                  >
+                    <i className="fa-solid fa-chevron-down text-[10px]"></i>
+                  </button>
+                </div>
+
+                <div className="flex gap-2 overflow-x-auto no-scrollbar py-2">
+                  {EXPERIENCE_OPTIONS.map((exp) => (
+                    <button
+                      key={exp}
+                      title={`Only show ${exp} jobs`}
+                      onClick={() => setSelectedExperience(exp)}
+                      className={`shrink-0 px-4 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all border-2 ${
+                        selectedExperience === exp
+                          ? "bg-indigo-600 border-indigo-600 text-white shadow-lg"
+                          : "bg-white border-slate-100 text-slate-400 hover:border-slate-200 active:bg-slate-50"
+                      }`}
+                    >
+                      {exp}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
 
-            <div className="mb-8">
-              <p className="text-[10px] font-black text-slate-400 uppercase mb-3 tracking-widest">
-                Popular Areas
-              </p>
-              <div className="grid grid-cols-2 gap-3 overflow-y-auto max-h-60 no-scrollbar pr-1">
-                {Object.keys(STATES_AND_CITIES).map((state) =>
-                  STATES_AND_CITIES[state].slice(0, 2).map((city) => (
+            <div className="flex-1 overflow-y-auto px-6 pb-[96px] no-scrollbar bg-white">
+              <div className="flex justify-between items-center mb-6 mt-6">
+                <h2 className="font-black text-slate-900 text-sm uppercase tracking-tighter">
+                  Recommended jobs
+                </h2>
+                <div className="flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 rounded-full border border-slate-100">
+                  <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-pulse"></div>
+                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
+                    {processedJobs.length} Results
+                  </span>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                {processedJobs.map((job) => (
+                  <JobCard
+                    key={job.id ?? `${job.title}-${job.createdAt}`}
+                    job={job}
+                    onReport={onReport}
+                    language={language}
+                    isGuest={isGuest}
+                    onAuthRequired={onAuthRequired}
+                  />
+                ))}
+
+                {processedJobs.length === 0 && (
+                  <div className="py-20 text-center">
+                    <div className="w-20 h-20 bg-slate-50 rounded-[40px] flex items-center justify-center mx-auto mb-6 text-slate-200">
+                      <i className="fa-solid fa-magnifying-glass text-3xl"></i>
+                    </div>
+                    <p className="font-black uppercase text-xs text-slate-400 tracking-widest leading-relaxed px-10">
+                      No jobs matching your criteria. Try changing filters.
+                    </p>
                     <button
-                      key={city}
-                      title={`Set location to ${city}`}
-                      onClick={() => handleManualLocationSelect(city)}
-                      className="px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-left active:bg-indigo-50 transition-colors group"
+                      title="Remove all search and distance filters"
+                      onClick={() => {
+                        setSelectedExperience("All");
+                        setMaxDistance(30);
+                        setSearchQuery("");
+                      }}
+                      className="mt-8 text-indigo-600 font-black text-[10px] uppercase tracking-widest border-b-2 border-indigo-100 active:text-indigo-800"
                     >
-                      <p className="text-xs font-black text-slate-800 group-active:text-indigo-600">
-                        {city}
-                      </p>
-                      <p className="text-[8px] font-bold text-slate-300 uppercase mt-0.5">
-                        {state}
-                      </p>
+                      Reset all filters
                     </button>
-                  )),
+                  </div>
                 )}
               </div>
             </div>
 
-            <button
-              title="Detect my current location using GPS"
-              onClick={() => {
-                if ("geolocation" in navigator) {
-                  navigator.geolocation.getCurrentPosition(
-                    (pos) => {
-                      const loc = {
-                        lat: pos.coords.latitude,
-                        lng: pos.coords.longitude,
-                        address: "Current Area",
-                        source: "GPS" as const,
-                      };
-                      setUserLocation(loc);
-                      setIsLocationPickerOpen(false);
-                    },
-                    null,
-                    { enableHighAccuracy: true },
-                  );
-                }
-              }}
-              className="w-full py-5 bg-indigo-600 text-white rounded-3xl font-black uppercase tracking-widest text-[11px] shadow-xl shadow-indigo-100 active:scale-[0.98] transition-all"
-            >
-              <i className="fa-solid fa-location-crosshairs mr-2"></i> Use My
-              GPS Location
-            </button>
+            {isListening && (
+              <div className="fixed inset-0 z-[600] bg-slate-900/90 backdrop-blur-md flex flex-col items-center justify-center p-12 text-center animate-in fade-in duration-300">
+                <div className="relative mb-12">
+                  <div className="absolute inset-0 bg-orange-500 rounded-full blur-2xl opacity-20 animate-pulse"></div>
+                  <div className="w-24 h-24 bg-orange-500 rounded-full flex items-center justify-center text-white text-4xl shadow-2xl relative z-10 animate-bounce">
+                    <i className="fa-solid fa-microphone"></i>
+                  </div>
+                </div>
+                <h2 className="text-2xl font-black text-white mb-2 uppercase tracking-tight">
+                  {voiceStatus}
+                </h2>
+                <p className="text-orange-400 font-bold text-lg h-8 animate-in slide-in-from-bottom-2 duration-300">
+                  {interimTranscript || 'Try saying "Cook jobs in Mumbai"'}
+                </p>
+                <button
+                  title="Cancel voice input"
+                  onClick={() => setIsListening(false)}
+                  className="mt-16 w-14 h-14 bg-white/10 rounded-full flex items-center justify-center text-white active:scale-90 transition-all border border-white/20"
+                >
+                  <i className="fa-solid fa-xmark"></i>
+                </button>
+              </div>
+            )}
+
+            {isLocationPickerOpen && (
+              <div className="fixed inset-0 z-[500] bg-black/60 backdrop-blur-md flex items-end sm:items-center justify-center p-4">
+                <div className="bg-white w-full max-w-md rounded-[40px] p-8 shadow-2xl animate-in slide-in-from-bottom-10 duration-300 flex flex-col">
+                  <div className="flex justify-between items-center mb-6">
+                    <h2 className="text-xl font-black text-slate-900">
+                      Search Filter
+                    </h2>
+                    <button
+                      title="Close filter settings"
+                      onClick={() => setIsLocationPickerOpen(false)}
+                      className="w-10 h-10 bg-slate-50 rounded-full flex items-center justify-center text-slate-400 active:scale-90 transition-transform"
+                    >
+                      <i className="fa-solid fa-xmark"></i>
+                    </button>
+                  </div>
+
+                  <div className="mb-8">
+                    <p className="text-[10px] font-black text-slate-400 uppercase mb-3 tracking-widest">
+                      Search Distance
+                    </p>
+                    <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+                      {DISTANCE_OPTIONS.map((d) => (
+                        <button
+                          key={d}
+                          title={`Filter by jobs within ${d}km`}
+                          onClick={() => setMaxDistance(d)}
+                          className={`shrink-0 px-6 py-3 rounded-2xl text-xs font-black transition-all border-2 ${
+                            maxDistance === d
+                              ? "bg-indigo-600 border-indigo-600 text-white shadow-lg"
+                              : "bg-white border-slate-100 text-slate-400 hover:border-slate-200 active:bg-slate-50"
+                          }`}
+                        >
+                          {d} KM
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="mb-8">
+                    <p className="text-[10px] font-black text-slate-400 uppercase mb-3 tracking-widest">
+                      Popular Areas
+                    </p>
+                    <div className="grid grid-cols-2 gap-3 overflow-y-auto max-h-60 no-scrollbar pr-1">
+                      {Object.keys(STATES_AND_CITIES).map((state) =>
+                        STATES_AND_CITIES[state].slice(0, 2).map((city) => (
+                          <button
+                            key={city}
+                            title={`Set location to ${city}`}
+                            onClick={() => handleManualLocationSelect(city)}
+                            className="px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-left active:bg-indigo-50 transition-colors group"
+                          >
+                            <p className="text-xs font-black text-slate-800 group-active:text-indigo-600">
+                              {city}
+                            </p>
+                            <p className="text-[8px] font-bold text-slate-300 uppercase mt-0.5">
+                              {state}
+                            </p>
+                          </button>
+                        )),
+                      )}
+                    </div>
+                  </div>
+
+                  <button
+                    title="Detect my current location using GPS"
+                    onClick={() => {
+                      if ("geolocation" in navigator) {
+                        navigator.geolocation.getCurrentPosition(
+                          (pos) => {
+                            const loc = {
+                              lat: pos.coords.latitude,
+                              lng: pos.coords.longitude,
+                              address: "Current Area",
+                              source: "GPS" as const,
+                            };
+                            setUserLocation(loc);
+                            setIsLocationPickerOpen(false);
+                          },
+                          (err) => {
+                            alert(
+                              "Unable to retrieve your location. Please try again.",
+                            );
+                          },
+                        );
+                      }
+                    }}
+                    className="w-full py-5 bg-indigo-600 text-white rounded-3xl font-black uppercase tracking-widest text-[11px] shadow-xl shadow-indigo-100 active:scale-[0.98] transition-all"
+                  >
+                    <i className="fa-solid fa-location-crosshairs mr-2"></i> Use
+                    My GPS Location
+                  </button>
+                </div>
+              </div>
+            )}
+            <style>{`.no-scrollbar::-webkit-scrollbar { display: none; }`}</style>
+          </div>
+        )}
+      </div>
+
+      {/* BOTTOM NAVIGATION */}
+      <div className="absolute bottom-0 left-0 right-0 z-50 bg-white border-t border-slate-100 px-6 py-3 shadow-[0_-8px_20px_rgba(0,0,0,0.04)]">
+        <div className="flex justify-between items-center">
+          {/* HOME */}
+          <button
+            onClick={() => {
+              setViewState("INDUSTRY_SELECT");
+              setActiveTab("HOME");
+            }}
+            className={`flex flex-col items-center gap-1 text-xs font-bold ${
+              activeTab === "HOME" ? "text-indigo-600" : "text-slate-400"
+            }`}
+          >
+            <i className="fa-solid fa-house text-lg"></i>
+            Home
+          </button>
+
+          {/* JOBS */}
+          <button
+            onClick={() => {
+              if (!selectedCategory) {
+                setViewState("INDUSTRY_SELECT");
+                setActiveTab("HOME");
+              } else {
+                setViewState("JOB_FEED");
+                setActiveTab("JOBS");
+              }
+            }}
+            className={`flex flex-col items-center gap-1 text-xs font-bold ${
+              activeTab === "JOBS" ? "text-indigo-600" : "text-slate-400"
+            }`}
+          >
+            <i className="fa-solid fa-briefcase text-lg"></i>
+            Jobs
+          </button>
+
+          {/* PROFILE */}
+          <button
+            title="View your profile and resume"
+            onClick={() => {
+              if (isGuest) {
+                setShowAuthPrompt(true);
+              } else {
+                setIsProfileOpen(true);
+                setActiveTab("PROFILE");
+              }
+            }}
+            className={`flex flex-col items-center gap-1 text-xs font-bold ${
+              activeTab === "PROFILE" ? "text-indigo-600" : "text-slate-400"
+            }`}
+          >
+            <i className="fa-solid fa-user text-lg"></i>
+            Profile
+          </button>
+        </div>
+      </div>
+      {showAuthPrompt && (
+        <div className="fixed inset-0 z-[700] bg-black/60 backdrop-blur-sm flex items-center justify-center p-6">
+          <div className="bg-white w-full max-w-xs rounded-[32px] p-8 shadow-2xl text-center animate-in zoom-in-95">
+            <div className="w-16 h-16 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center text-2xl mx-auto mb-6">
+              <i className="fa-solid fa-user-lock"></i>
+            </div>
+
+            <h2 className="text-xl font-black text-slate-900 mb-3">
+              Sign in required
+            </h2>
+
+            <p className="text-xs font-medium text-slate-500 leading-relaxed mb-8">
+              Please sign in to complete your profile and apply for jobs.
+            </p>
+
+            <div className="flex flex-col gap-3">
+              <button
+                onClick={() => {
+                  setShowAuthPrompt(false);
+                  onAuthRequired();
+                }}
+                className="w-full py-4 bg-indigo-600 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-lg active:scale-95"
+              >
+                Sign In
+              </button>
+
+              <button
+                onClick={() => setShowAuthPrompt(false)}
+                className="w-full py-4 bg-white text-slate-400 font-black uppercase text-[10px] tracking-widest rounded-2xl"
+              >
+                Cancel
+              </button>
+            </div>
           </div>
         </div>
       )}
-      <style>{`.no-scrollbar::-webkit-scrollbar { display: none; }`}</style>
     </div>
   );
 };

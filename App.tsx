@@ -229,22 +229,28 @@ const App: React.FC = () => {
     switch (currentUser?.role || UserRole.WORKER) {
       case UserRole.WORKER:
         return (
-          <WorkerView
-            jobs={jobs}
-            onReport={async (id) => {
-              updateJobsAtomic((prev) =>
-                prev.map((j) => (j.id === id ? { ...j, isReported: true } : j)),
-              );
-            }}
-            onChangeLanguage={() => setIsChangingLanguage(true)}
-            isGuest={isGuest}
-            currentUser={currentUser}
-            onProfileCompleted={handleProfileCompleted}
-            onAuthRequired={() => setShowAuthModal(true)}
-            onLogout={handleLogout}
-            isProfileOpen={isProfileOpen}
-            setIsProfileOpen={setIsProfileOpen}
-          />
+          <div className="w-full min-h-screen flex justify-center bg-slate-100">
+            <div className="relative w-full max-w-md min-h-screen bg-white overflow-hidden">
+              <WorkerView
+                jobs={jobs}
+                onReport={async (id) => {
+                  updateJobsAtomic((prev) =>
+                    prev.map((j) =>
+                      j.id === id ? { ...j, isReported: true } : j,
+                    ),
+                  );
+                }}
+                onChangeLanguage={() => setIsChangingLanguage(true)}
+                isGuest={isGuest}
+                currentUser={currentUser}
+                onProfileCompleted={handleProfileCompleted}
+                onAuthRequired={() => setShowAuthModal(true)}
+                onLogout={handleLogout}
+                isProfileOpen={isProfileOpen}
+                setIsProfileOpen={setIsProfileOpen}
+              />
+            </div>
+          </div>
         );
 
       case UserRole.EMPLOYER:
