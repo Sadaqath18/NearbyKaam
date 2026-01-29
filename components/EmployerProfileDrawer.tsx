@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
-import { EmployerProfile, Location, ShopPhoto } from "../types";
+import { EmployerProfile, JobCategory, Location, ShopPhoto } from "../types";
+import { EMPLOYER_INDUSTRIES } from "../constants/employerIndustries";
 
 interface EmployerProfileDrawerProps {
   isOpen: boolean;
@@ -8,17 +9,6 @@ interface EmployerProfileDrawerProps {
   onSave: (p: EmployerProfile) => void;
   isMandatory?: boolean;
 }
-
-const INDUSTRY_OPTIONS = [
-  "Hospitality / Restaurant",
-  "Retail / Shop",
-  "Automobile / Automobile",
-  "Construction",
-  "Factory / Warehouse",
-  "Logistics",
-  "Office / Services",
-  "Other",
-];
 
 const EmployerProfileDrawer: React.FC<EmployerProfileDrawerProps> = ({
   isOpen,
@@ -36,7 +26,8 @@ const EmployerProfileDrawer: React.FC<EmployerProfileDrawerProps> = ({
   useEffect(() => {
     if (isOpen) {
       setLocalProfile(profile);
-      setStep(1);
+      setStep(isMandatory ? 1 : totalSteps);
+
       setErrors({});
     }
   }, [profile, isOpen]);
@@ -44,7 +35,7 @@ const EmployerProfileDrawer: React.FC<EmployerProfileDrawerProps> = ({
   if (!isOpen) return null;
 
   // If isMandatory is false, it means the user is viewing their profile normally
-  const isEditMode = !isMandatory;
+  const isEditMode = !isMandatory && !!profile?.firstName;
 
   const totalSteps = 5;
   const progressPercent = Math.round((step / totalSteps) * 100);
@@ -185,10 +176,14 @@ const EmployerProfileDrawer: React.FC<EmployerProfileDrawerProps> = ({
               Tell us about your business.
             </h3>
             <div>
-              <label className="block text-[10px] font-black text-slate-600 uppercase tracking-widest mb-2 px-1">
+              <label
+                htmlFor="business-name"
+                className="block text-[10px] font-black text-slate-600 uppercase tracking-widest mb-2 px-1"
+              >
                 Business Name
               </label>
               <input
+                id="business-name"
                 type="text"
                 autoFocus
                 className={`w-full bg-white border-2 rounded-2xl p-5 font-bold text-lg outline-none transition-all ${errors.shopName ? "border-red-500 bg-red-50" : "border-slate-400 focus:border-indigo-600"}`}
@@ -208,15 +203,18 @@ const EmployerProfileDrawer: React.FC<EmployerProfileDrawerProps> = ({
                 className="w-full bg-white border-2 border-slate-400 rounded-2xl p-5 font-bold text-lg focus:border-indigo-600 outline-none cursor-pointer"
                 value={localProfile.industry || ""}
                 onChange={(e) =>
-                  setLocalProfile({ ...localProfile, industry: e.target.value })
+                  setLocalProfile({
+                    ...localProfile,
+                    industry: e.target.value as JobCategory,
+                  })
                 }
               >
                 <option value="" disabled>
                   Select industry
                 </option>
-                {INDUSTRY_OPTIONS.map((opt) => (
-                  <option key={opt} value={opt}>
-                    {opt}
+                {EMPLOYER_INDUSTRIES.map((opt) => (
+                  <option key={opt.id} value={opt.id}>
+                    {opt.label}
                   </option>
                 ))}
               </select>
@@ -246,8 +244,7 @@ const EmployerProfileDrawer: React.FC<EmployerProfileDrawerProps> = ({
                 setLocalProfile({
                   ...localProfile,
                   location: {
-                    lat: 0,
-                    lng: 0,
+                    ...(localProfile.location ?? { lat: 0, lng: 0 }),
                     address: e.target.value,
                     source: "MANUAL",
                   },
@@ -357,10 +354,14 @@ const EmployerProfileDrawer: React.FC<EmployerProfileDrawerProps> = ({
 
       <div className="space-y-6 text-left">
         <div>
-          <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 px-1">
+          <label
+            htmlFor="employer-name"
+            className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 px-1"
+          >
             Employer Name
           </label>
           <input
+            id="employer-name"
             title="Enter employer full name"
             aria-label="Employer full name"
             className={`w-full bg-white border-2 rounded-2xl p-4 font-bold text-slate-700 outline-none transition-all ${errors.firstName ? "border-red-500 bg-red-50" : "border-slate-400 focus:border-indigo-600"}`}
@@ -385,28 +386,42 @@ const EmployerProfileDrawer: React.FC<EmployerProfileDrawerProps> = ({
           />
         </div>
         <div>
-          <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 px-1">
+          <label
+            htmlFor="employer-industry"
+            className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 px-1"
+          >
             Industry
           </label>
           <select
+            id="employer-industry"
             title="Select your business industry"
             aria-label="Business industry"
             className="w-full bg-white border-2 border-slate-400 rounded-2xl p-4 font-bold text-slate-700 cursor-pointer outline-none focus:border-indigo-600"
             value={localProfile.industry || ""}
             onChange={(e) =>
-              setLocalProfile({ ...localProfile, industry: e.target.value })
+              setLocalProfile({
+                ...localProfile,
+                industry: e.target.value as JobCategory,
+              })
             }
           >
-            {INDUSTRY_OPTIONS.map((opt) => (
-              <option key={opt} value={opt}>
-                {opt}
+            <option value="" disabled>
+              Select industry
+            </option>
+
+            {EMPLOYER_INDUSTRIES.map((opt) => (
+              <option key={opt.id} value={opt.id}>
+                {opt.label}
               </option>
             ))}
           </select>
         </div>
         <div>
           <div className="flex justify-between items-center mb-2 px-1">
-            <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest">
+            <label
+              htmlFor="shop-address"
+              className="block text-[10px] font-black text-slate-500 uppercase tracking-widest"
+            >
               Office / Shop Address
             </label>
             <button
@@ -417,6 +432,7 @@ const EmployerProfileDrawer: React.FC<EmployerProfileDrawerProps> = ({
             </button>
           </div>
           <textarea
+            id="shop-address"
             title="Office or shop address"
             aria-label="Office or shop address"
             className={`w-full bg-white border-2 rounded-2xl p-4 font-bold text-slate-700 min-h-[100px] outline-none transition-all ${errors.location ? "border-red-500 bg-red-50" : "border-slate-400 focus:border-indigo-600"}`}
@@ -429,13 +445,17 @@ const EmployerProfileDrawer: React.FC<EmployerProfileDrawerProps> = ({
                   lat: 0,
                   lng: 0,
                   address: e.target.value,
+                  source: "MANUAL",
                 },
               })
             }
           />
         </div>
         <div>
-          <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 px-1">
+          <label
+            htmlFor="shop-photo"
+            className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 px-1"
+          >
             Shop Photo
           </label>
           <div
