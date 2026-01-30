@@ -16,6 +16,8 @@ import EmployerBottomNav, {
   EmployerTab,
 } from "../components/EmployerBottomNav";
 import { useLanguage } from "../context/LanguageContext";
+import JobCard from "../components/JobCard";
+import MatchingWorkersView from "../components/MatchingWorkersView";
 
 interface EmployerViewProps {
   onJobSubmit: (job: Job) => void;
@@ -55,8 +57,14 @@ const EmployerView: React.FC<EmployerViewProps> = ({
     useState<EmployerProfile | null>(null);
 
   const [view, setView] = useState<
-    "DASHBOARD" | "POST_JOB" | "APPLICANTS" | "SUCCESS"
-  >("DASHBOARD");
+    | "HOME"
+    | "MY_JOBS"
+    | "MATCHING_WORKERS"
+    | "POST_JOB"
+    | "APPLICANTS"
+    | "SUCCESS"
+  >("HOME");
+
   useEffect(() => {
     if (!currentUser?.phone) return;
 
@@ -280,13 +288,23 @@ const EmployerView: React.FC<EmployerViewProps> = ({
 
   const [activeTab, setActiveTab] = useState<EmployerTab>("HOME");
   useEffect(() => {
-    if (activeTab === "HOME") setView("DASHBOARD");
-    if (activeTab === "MY_JOBS") setView("DASHBOARD"); // filtered later
-    if (activeTab === "MATCHING_WORKERS") setView("APPLICANTS");
+    if (activeTab === "HOME") setView("HOME");
+    if (activeTab === "MY_JOBS") setView("MY_JOBS"); // filtered later
+    if (activeTab === "MATCHING_WORKERS") setView("MATCHING_WORKERS");
     if (activeTab === "PROFILE") setIsEmployerProfileOpen(true);
   }, [activeTab]);
 
-  const renderDashboard = () => (
+  // Employer industry → allowed job categories
+  const employerJobCategories = employerProfile?.industry
+    ? [employerProfile.industry]
+    : [];
+
+  // FINAL filtered workers (industry-based)
+  const matchingWorkers = MOCK_APPLICANTS.filter((worker) =>
+    employerJobCategories.includes(worker.jobType),
+  );
+
+  const renderHome = () => (
     <div className="flex-1 overflow-y-auto pb-32 no-scrollbar bg-white">
       <div className="bg-slate-900 px-6 pt-12 pb-10 rounded-b-[40px] shadow-xl">
         <div className="flex justify-between items-center mb-6">
@@ -406,8 +424,8 @@ const EmployerView: React.FC<EmployerViewProps> = ({
     <div className="flex-1 flex flex-col bg-slate-50 relative h-full">
       <div className="px-6 pt-12 pb-6 bg-white border-b-2 border-slate-200 sticky top-0 z-20 flex justify-between items-center shadow-sm">
         <button
-          title="Back to Dashboard"
-          onClick={() => setView("DASHBOARD")}
+          title="Back to Home"
+          onClick={() => setView("HOME")}
           className="w-11 h-11 bg-slate-50 border-2 border-slate-200 rounded-2xl flex items-center justify-center text-slate-500 active:scale-90 transition-all shadow-sm"
         >
           <i className="fa-solid fa-arrow-left"></i>
@@ -700,6 +718,7 @@ const EmployerView: React.FC<EmployerViewProps> = ({
 
         <section className="pb-20">
           <button
+            title="Verification"
             onClick={handleStartPosting}
             className="w-full py-5 bg-indigo-600 text-white rounded-2xl font-black uppercase tracking-widest text-[11px] shadow-xl shadow-indigo-100 active:scale-95 transition-all border-b-4 border-indigo-800"
           >
@@ -845,6 +864,19 @@ const EmployerView: React.FC<EmployerViewProps> = ({
     </div>
   );
 
+  const renderMyJobs = () => (
+    <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-slate-50">
+      {myJobs.length === 0 ? (
+        <div className="py-20 text-center opacity-40">
+          <i className="fa-solid fa-clipboard-list text-6xl mb-4"></i>
+          <p className="font-black uppercase text-[10px]">No jobs posted yet</p>
+        </div>
+      ) : (
+        myJobs.map((job) => <JobCard key={job.id} job={job} />)
+      )}
+    </div>
+  );
+
   const renderSuccess = () => (
     <div className="fixed inset-0 z-[200] bg-white flex flex-col items-center justify-center p-10 text-center animate-in zoom-in-95 duration-500 h-screen w-full">
       <div className="w-24 h-24 bg-emerald-100 border-4 border-emerald-200 text-emerald-500 rounded-full flex items-center justify-center mb-8 text-4xl shadow-xl shadow-emerald-50">
@@ -858,10 +890,10 @@ const EmployerView: React.FC<EmployerViewProps> = ({
         local workers after approval.
       </p>
       <button
-        onClick={() => setView("DASHBOARD")}
+        onClick={() => setView("HOME")}
         className="mt-12 w-full max-w-xs py-5 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest shadow-xl active:scale-95 transition-all"
       >
-        Back to Dashboard
+        Back to Home
       </button>
     </div>
   );
@@ -871,7 +903,7 @@ const EmployerView: React.FC<EmployerViewProps> = ({
       <div className="px-6 pt-12 pb-6 flex justify-between items-center bg-white border-b-2 border-slate-200 sticky top-0 z-10 shadow-sm">
         <button
           title="Back"
-          onClick={() => setView("DASHBOARD")}
+          onClick={() => setView("HOME")}
           className="w-11 h-11 rounded-2xl bg-slate-50 border-2 border-slate-400 flex items-center justify-center text-slate-500 active:scale-90 transition-transform shadow-sm"
         >
           <i className="fa-solid fa-arrow-left"></i>
@@ -959,16 +991,22 @@ const EmployerView: React.FC<EmployerViewProps> = ({
 
   return (
     <div className="flex-1 h-full flex flex-col bg-slate-50 overflow-hidden relative">
-      {view === "DASHBOARD" && renderDashboard()}
+      {view === "HOME" && renderHome()}
+      {view === "MY_JOBS" && renderMyJobs()}
       {view === "POST_JOB" && renderPostJob()}
       {view === "APPLICANTS" && renderApplicants()}
       {view === "SUCCESS" && renderSuccess()}
 
-      {view === "DASHBOARD" && (
+      {view === "HOME" && (
         <div className="fixed bottom-24 left-1/2 -translate-x-1/2 w-full px-6 flex justify-center z-30 pointer-events-none">
           {/* Keeping button hidden here as it moved to header, but retaining structure if needed */}
         </div>
       )}
+
+      {view === "MATCHING_WORKERS" && (
+        <MatchingWorkersView workers={matchingWorkers} /> // or real workers list later
+      )}
+
       {employerProfile && (
         <EmployerProfileDrawer
           isOpen={mustCompleteEmployerProfile || isEmployerProfileOpen}
@@ -988,7 +1026,10 @@ const EmployerView: React.FC<EmployerViewProps> = ({
           }}
         />
       )}
-      <EmployerBottomNav activeTab={activeTab} onChange={setActiveTab} />
+      <EmployerBottomNav
+        activeTab={activeTab}
+        onChange={(tab) => setActiveTab(tab)}
+      />
     </div>
   );
 };

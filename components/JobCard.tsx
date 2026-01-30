@@ -9,8 +9,8 @@ import {
 
 interface JobCardProps {
   job: Job;
-  onReport: (id: string) => void;
-  language: string;
+  onReport?: (jobId: string) => void;
+  language?: string;
   isCompact?: boolean;
   isGuest?: boolean;
   onAuthRequired?: () => void;
@@ -337,18 +337,19 @@ const JobCard: React.FC<JobCardProps> = ({
                 </span>
               </button>
             </div>
-
-            {/* REPORT BUTTON */}
-            <button
-              title="Report this job"
-              onClick={(e) => {
-                e.stopPropagation();
-                onReport(job.id);
-              }}
-              className="w-full py-3 text-[9px] font-black text-red-400 uppercase flex items-center justify-center gap-2 active:text-red-600 transition-colors"
-            >
-              <i className="fa-solid fa-flag"></i> Report this job
-            </button>
+            {/* REPORT BUTTON – only for worker view */}
+            {onReport && (
+              <button
+                title="Report this job"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onReport(job.id);
+                }}
+                className="w-full py-3 text-[9px] font-black text-red-400 uppercase flex items-center justify-center gap-2 active:text-red-600 transition-colors"
+              >
+                <i className="fa-solid fa-flag"></i> Report this job
+              </button>
+            )}
           </div>
         </div>
       </div>
