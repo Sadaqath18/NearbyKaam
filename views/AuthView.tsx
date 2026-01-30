@@ -178,6 +178,8 @@ const AuthView: React.FC<AuthViewProps> = ({
     <div className="h-full flex flex-col bg-white relative">
       {step === "ROLE" && (
         <button
+          title="Change Language"
+          type="button"
           onClick={(e) => {
             e.stopPropagation();
             onChangeLanguage();

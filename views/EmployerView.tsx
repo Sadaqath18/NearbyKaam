@@ -12,6 +12,10 @@ import { CATEGORIES } from "../constants";
 import { EmployerProfile } from "../types";
 import { createEmptyEmployerProfile } from "../utils/employerProfile";
 import EmployerProfileDrawer from "../components/EmployerProfileDrawer";
+import EmployerBottomNav, {
+  EmployerTab,
+} from "../components/EmployerBottomNav";
+import { useLanguage } from "../context/LanguageContext";
 
 interface EmployerViewProps {
   onJobSubmit: (job: Job) => void;
@@ -44,6 +48,7 @@ const EmployerView: React.FC<EmployerViewProps> = ({
   onJobSubmit,
   allJobs,
   currentUser,
+  onChangeLanguage,
   onLogout,
 }) => {
   const [employerProfile, setEmployerProfile] =
@@ -271,6 +276,15 @@ const EmployerView: React.FC<EmployerViewProps> = ({
     };
     reader.readAsDataURL(file);
   };
+  const { language } = useLanguage();
+
+  const [activeTab, setActiveTab] = useState<EmployerTab>("HOME");
+  useEffect(() => {
+    if (activeTab === "HOME") setView("DASHBOARD");
+    if (activeTab === "MY_JOBS") setView("DASHBOARD"); // filtered later
+    if (activeTab === "MATCHING_WORKERS") setView("APPLICANTS");
+    if (activeTab === "PROFILE") setIsEmployerProfileOpen(true);
+  }, [activeTab]);
 
   const renderDashboard = () => (
     <div className="flex-1 overflow-y-auto pb-32 no-scrollbar bg-white">
@@ -283,15 +297,20 @@ const EmployerView: React.FC<EmployerViewProps> = ({
             </p>
           </div>
           <div className="flex items-center gap-3">
+            {/* Change Language */}
             <button
-              title="Edit employer profile"
-              aria-label="Edit employer profile"
-              onClick={() => setIsEmployerProfileOpen(true)}
+              title="Change Language"
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onChangeLanguage();
+              }}
               className="w-11 h-11 bg-white/10 rounded-2xl flex items-center justify-center text-white border border-white/20 active:scale-95 transition-all"
             >
-              <i className="fa-solid fa-user-gear"></i>
+              <i className="fa-solid fa-globe"></i>
             </button>
 
+            {/* Logout */}
             <button
               title="Logout"
               onClick={onLogout}
@@ -955,7 +974,10 @@ const EmployerView: React.FC<EmployerViewProps> = ({
           isOpen={mustCompleteEmployerProfile || isEmployerProfileOpen}
           isMandatory={mustCompleteEmployerProfile}
           profile={employerProfile}
-          onClose={() => setIsEmployerProfileOpen(false)}
+          onClose={() => {
+            setIsEmployerProfileOpen(false);
+            setActiveTab("HOME");
+          }}
           onSave={(updatedProfile) => {
             setEmployerProfile(updatedProfile);
             localStorage.setItem(
@@ -966,6 +988,7 @@ const EmployerView: React.FC<EmployerViewProps> = ({
           }}
         />
       )}
+      <EmployerBottomNav activeTab={activeTab} onChange={setActiveTab} />
     </div>
   );
 };

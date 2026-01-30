@@ -4,15 +4,17 @@ import { CATEGORIES } from "../constants";
 
 interface WorkerProfileDrawerProps {
   isOpen: boolean;
+
   onClose?: () => void;
- onExitRequest?: () => void;
+  onExitRequest?: () => void;
+
   profile: WorkerProfile;
   onSave: (p: WorkerProfile) => void;
-  onChangeLanguage: () => void;
-  isMandatory?: boolean; // Field-level (validation, asterisks, errors)
 
+  onChangeLanguage: () => void;
+
+  isMandatory?: boolean; // Field-level (validation, asterisks, errors)
   forceComplete?: boolean; //  Flow-level (cannot close / cannot skip)
-  isMandatory?: boolean;
 }
 
 const getEmptyWorkerProfile = (phone: string): WorkerProfile => ({
@@ -36,10 +38,13 @@ const getEmptyWorkerProfile = (phone: string): WorkerProfile => ({
 
 const WorkerProfileDrawer: React.FC<WorkerProfileDrawerProps> = ({
   isOpen,
-  onClose,
   profile,
   onSave,
+
+  onClose,
+  onExitRequest,
   onChangeLanguage,
+
   isMandatory = false,
   forceComplete = false,
 }) => {
@@ -243,17 +248,26 @@ const WorkerProfileDrawer: React.FC<WorkerProfileDrawerProps> = ({
             </div>
           </div>
 
-        {forceComplete && onExitRequest && (
-  <button
-    title="Exit to guest mode"
-    onClick={onExitRequest}
-    className="w-10 h-10 bg-gray-50 rounded-full flex items-center justify-center text-gray-400 active:scale-90 transition-all"
-  >
-    <i className="fa-solid fa-xmark"></i>
-  </button>
-)}
-
-
+          {/* HEADER ACTION */}
+          {forceComplete
+            ? onExitRequest && (
+                <button
+                  title="Exit to guest mode"
+                  onClick={onExitRequest}
+                  className="w-10 h-10 bg-gray-50 rounded-full flex items-center justify-center text-gray-400 active:scale-90 transition-all"
+                >
+                  <i className="fa-solid fa-xmark"></i>
+                </button>
+              )
+            : onClose && (
+                <button
+                  title="Close profile"
+                  onClick={onClose}
+                  className="w-10 h-10 bg-gray-50 rounded-full flex items-center justify-center text-gray-400 active:scale-90 transition-all"
+                >
+                  <i className="fa-solid fa-xmark"></i>
+                </button>
+              )}
         </div>
 
         {errors.length > 0 && (
@@ -527,7 +541,7 @@ const WorkerProfileDrawer: React.FC<WorkerProfileDrawerProps> = ({
                         </p>
                       </div>
                     </div>
-      <button
+                    <button
                       title="Remove document"
                       onClick={removeDocument}
                       className="text-red-400 p-2"
