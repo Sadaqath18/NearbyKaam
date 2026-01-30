@@ -43,7 +43,6 @@ const MOCK_APPLICANTS: WorkerProfile[] = [
 const EmployerView: React.FC<EmployerViewProps> = ({
   onJobSubmit,
   allJobs,
-  onChangeLanguage,
   currentUser,
   onLogout,
 }) => {
@@ -76,7 +75,7 @@ const EmployerView: React.FC<EmployerViewProps> = ({
   const [postData, setPostData] = useState({
     firstName: "",
     shopName: "",
-    industry: "",
+    industry: undefined as JobCategory | undefined,
     jobRole: "",
     category: undefined as JobCategory | undefined,
     description: "",
@@ -96,8 +95,8 @@ const EmployerView: React.FC<EmployerViewProps> = ({
       ...prev,
       firstName: employerProfile.firstName,
       shopName: employerProfile.shopName,
-      industry: employerProfile.industry,
-      location: employerProfile.location || null,
+      location: employerProfile.location,
+      callNumber: employerProfile.phone,
     }));
   }, [employerProfile]);
 
@@ -133,6 +132,17 @@ const EmployerView: React.FC<EmployerViewProps> = ({
     audioRef.current.onended = () => setPlayingAudioId(null);
   };
 
+  const handleSubmitJob = () => {
+    if (!isEmployerProfileComplete(employerProfile)) {
+      setIsEmployerProfileOpen(true); // force profile completion
+      return;
+    }
+
+    if (!validateForm()) return;
+
+    setIsVerifyingOtp(true);
+  };
+
   const validateForm = () => {
     const e: Record<string, string> = {};
     if (!postData.firstName.trim()) e.firstName = "Name required";
@@ -155,11 +165,29 @@ const EmployerView: React.FC<EmployerViewProps> = ({
     return Object.keys(e).length === 0;
   };
 
+  const isEmployerProfileComplete = (profile: EmployerProfile | null) => {
+    if (!profile) return false;
+
+    return (
+      profile.firstName?.trim() &&
+      profile.shopName?.trim() &&
+      profile.location?.address?.trim()
+      // ⚠️ industry intentionally NOT checked
+    );
+  };
+
+  const mustCompleteEmployerProfile =
+    !!employerProfile && !isEmployerProfileComplete(employerProfile);
+
   const handleStartPosting = () => {
-    if (validateForm()) {
-      setErrors({});
-      setIsVerifyingOtp(true);
+    if (!isEmployerProfileComplete(employerProfile)) {
+      setIsEmployerProfileOpen(true);
+      return;
     }
+
+    if (!validateForm()) return;
+
+    setIsVerifyingOtp(true);
   };
 
   const handleVerifyOtp = () => {
@@ -178,9 +206,9 @@ const EmployerView: React.FC<EmployerViewProps> = ({
       if (employerProfile) {
         const updatedProfile = {
           ...employerProfile,
-          ownerName: postData.firstName,
+          firstName: postData.firstName,
           shopName: postData.shopName,
-          industry: postData.industry as JobCategory,
+          industry: postData.industry ?? employerProfile.industry,
           location: postData.location ?? employerProfile.location,
         };
 
@@ -924,8 +952,8 @@ const EmployerView: React.FC<EmployerViewProps> = ({
       )}
       {employerProfile && (
         <EmployerProfileDrawer
-          isOpen={isEmployerProfileOpen}
-          isMandatory={false}
+          isOpen={mustCompleteEmployerProfile || isEmployerProfileOpen}
+          isMandatory={mustCompleteEmployerProfile}
           profile={employerProfile}
           onClose={() => setIsEmployerProfileOpen(false)}
           onSave={(updatedProfile) => {

@@ -76,6 +76,26 @@ const EmployerProfileDrawer: React.FC<EmployerProfileDrawerProps> = ({
     if (step < totalSteps) setStep(step + 1);
     else onSave(localProfile);
   };
+  {
+    errors.firstName && (
+      <p className="text-red-500 text-xs font-bold mt-1">{errors.firstName}</p>
+    );
+  }
+  {
+    errors.shopName && (
+      <p className="text-red-500 text-xs font-bold mt-1">{errors.shopName}</p>
+    );
+  }
+  {
+    errors.industry && (
+      <p className="text-red-500 text-xs font-bold mt-1">{errors.industry}</p>
+    );
+  }
+  {
+    errors.location && (
+      <p className="text-red-500 text-xs font-bold mt-1">{errors.location}</p>
+    );
+  }
 
   const handleSaveEdit = () => {
     if (validateAll()) {
