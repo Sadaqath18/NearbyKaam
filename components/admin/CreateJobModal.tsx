@@ -1,12 +1,14 @@
 import React, { useMemo, useState } from "react";
 import { Job, JobCategory, SalaryType } from "../../types";
 import { CATEGORIES } from "../../constants";
+import { EMPLOYER_INDUSTRIES } from "@/constants/employerIndustries";
 
 interface EmployerLite {
   id: string;
   shopName: string;
   employerName: string;
   phone: string;
+  industry: JobCategory;
 }
 
 interface Props {
@@ -245,30 +247,17 @@ const CreateJobModal: React.FC<Props> = ({ employers, onCreate, onClose }) => {
         />
 
         {/* Category */}
-        <select
-          title="category"
-          value={category}
-          onChange={(e) =>
-            setCategory(e.target.value as JobCategory | "CUSTOM")
-          }
-          className="w-full border p-3 rounded-xl font-bold"
-        >
-          {CATEGORIES.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.label}
-            </option>
-          ))}
-          <option value="CUSTOM">Custom</option>
-        </select>
-
-        {category === "CUSTOM" && (
+        <div>
+          <label className="label">Industry</label>
           <input
-            placeholder="Custom category"
-            value={customCategory}
-            onChange={(e) => setCustomCategory(e.target.value)}
-            className="w-full border p-3 rounded-xl font-bold"
+            title="industry"
+            className="w-full border p-3 rounded-xl font-bold bg-slate-100 cursor-not-allowed"
+            disabled
+            value={
+              EMPLOYER_INDUSTRIES.find((i) => i.id === employer.industry)?.label
+            }
           />
-        )}
+        </div>
 
         {/* Location */}
         <input

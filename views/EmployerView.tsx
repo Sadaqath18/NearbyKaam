@@ -72,11 +72,12 @@ const EmployerView: React.FC<EmployerViewProps> = ({
     const saved = localStorage.getItem(key);
 
     if (saved) {
-      setEmployerProfile(JSON.parse(saved));
+      setEmployerProfile(JSON.parse(saved) as EmployerProfile);
     } else {
-      const fresh = createEmptyEmployerProfile(currentUser.phone);
-      localStorage.setItem(key, JSON.stringify(fresh));
-      setEmployerProfile(fresh);
+      const fresh = createEmptyEmployerProfile(
+        currentUser.phone,
+        undefined, //industry intentionally undefined
+      );
     }
   }, [currentUser?.phone]);
 
@@ -88,7 +89,6 @@ const EmployerView: React.FC<EmployerViewProps> = ({
   const [postData, setPostData] = useState({
     firstName: "",
     shopName: "",
-    industry: undefined as JobCategory | undefined,
     jobRole: "",
     category: undefined as JobCategory | undefined,
     description: "",
@@ -221,7 +221,7 @@ const EmployerView: React.FC<EmployerViewProps> = ({
           ...employerProfile,
           firstName: postData.firstName,
           shopName: postData.shopName,
-          industry: postData.industry ?? employerProfile.industry,
+          industry: employerProfile.industry, // locked
           location: postData.location ?? employerProfile.location,
         };
 
@@ -238,7 +238,7 @@ const EmployerView: React.FC<EmployerViewProps> = ({
         title: postData.jobRole,
         jobRole: postData.jobRole,
         category: postData.category,
-        industry: postData.industry,
+        industry: employerProfile.industry!,
         employerFirstName: postData.firstName,
         employerId: "me",
         employerName: postData.shopName,
