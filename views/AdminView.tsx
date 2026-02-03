@@ -22,6 +22,7 @@ import CreateEntitySelectorModal from "../components/admin/CreateEntitySelectorM
 import CategoryGrid from "../components/CategoryGrid";
 import JobCard from "../components/JobCard";
 import AdminPromotionPlans from "../components/admin/AdminPromotionPlans";
+import AdminPricingView from "./AdminViewPricing";
 
 interface AdminViewProps {
   jobs: Job[];
@@ -44,7 +45,8 @@ type AdminModule =
   | "ADMINS"
   | "PROMOTIONS"
   | "LOGS"
-  | "SETTINGS";
+  | "SETTINGS"
+  | "PRICING";
 
 const AdminView: React.FC<AdminViewProps> = ({
   jobs,
@@ -181,7 +183,7 @@ const AdminView: React.FC<AdminViewProps> = ({
   };
 
   const renderAdminHeader = () => (
-    <div className="bg-slate-900 px-6 pt-12 pb-6 border-b border-slate-800 sticky top-0 z-50">
+    <div className="bg-slate-900 px-6 pt-12 pb-6 border-b border-slate-800 sticky top-0 z-50 overflow-x-visible">
       <div className="flex justify-between items-start mb-6">
         <div className="text-left">
           <h1 className="text-2xl font-black text-white flex items-center gap-2">
@@ -212,28 +214,36 @@ const AdminView: React.FC<AdminViewProps> = ({
         </div>
       </div>
 
-      <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2">
-        {[
-          { id: "OVERVIEW", icon: "fa-chart-pie", label: "Overview" },
-          { id: "JOBS", icon: "fa-clipboard-list", label: "Jobs" },
-          { id: "EMPLOYERS", icon: "fa-shop", label: "Employers" },
-          { id: "WORKERS", icon: "fa-users", label: "Workers" },
-          { id: "ADMINS", icon: "fa-user-shield", label: "Staff" },
-          { id: "PROMOTIONS", icon: "fa-bolt", label: "Promotions" },
-          { id: "LOGS", icon: "fa-list-ul", label: "Audit" },
-        ].map((mod) => (
-          <button
-            key={mod.id}
-            onClick={() => setActiveModule(mod.id as AdminModule)}
-            className={`flex items-center gap-2 px-5 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all shrink-0 border-2 ${
-              activeModule === mod.id
-                ? "bg-white text-slate-900 border-white shadow-lg scale-105"
-                : "bg-slate-800 text-slate-400 border-slate-700 active:scale-95"
-            }`}
-          >
-            <i className={`fa-solid ${mod.icon}`}></i> {mod.label}
-          </button>
-        ))}
+      <div className="relative  w-full overflow-x-visible">
+        <div
+          className="flex gap-2 overflow-x-auto no-scrollbar pb-2 pr-6 cursor-grab active:cursor-grabbing"
+          style={{ WebkitOverflowScrolling: "touch", scrollbarWidth: "thin" }}
+        >
+          {[
+            { id: "OVERVIEW", icon: "fa-chart-pie", label: "Overview" },
+            { id: "JOBS", icon: "fa-clipboard-list", label: "Jobs" },
+            { id: "EMPLOYERS", icon: "fa-shop", label: "Employers" },
+            { id: "WORKERS", icon: "fa-users", label: "Workers" },
+            { id: "ADMINS", icon: "fa-user-shield", label: "Staff" },
+            { id: "PROMOTIONS", icon: "fa-bolt", label: "Promotions" },
+            { id: "LOGS", icon: "fa-list-ul", label: "Audit" },
+            { id: "PRICING", icon: "fa-tags", label: "Pricing" },
+          ].map((mod) => (
+            <button
+              key={mod.id}
+              onClick={() => setActiveModule(mod.id as AdminModule)}
+              className={`flex items-center gap-2 px-5 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all shrink-0 border-2 ${
+                activeModule === mod.id
+                  ? "bg-white text-slate-900 border-white shadow-lg scale-105"
+                  : "bg-slate-800 text-slate-400 border-slate-700 active:scale-95"
+              }`}
+            >
+              <i className={`fa-solid ${mod.icon}`}></i> {mod.label}
+            </button>
+          ))}
+        </div>
+        {/* Scroll hint */}
+        <div className="pointer-events-none absolute right-0 top-0 h-full w-8 bg-gradient-to-l from-slate-900 to-transparent" />
       </div>
     </div>
   );
@@ -1105,6 +1115,8 @@ const AdminView: React.FC<AdminViewProps> = ({
         )}
 
         {activeModule === "PROMOTIONS" && <AdminPromotionPlans />}
+
+        {activeModule === "PRICING" && <AdminPricingView />}
 
         {activeModule === "LOGS" && (
           <div className="p-6 space-y-4 animate-in fade-in duration-300 text-left">

@@ -25,6 +25,31 @@ const App: React.FC = () => {
     const saved = localStorage.getItem("nearbykaam_jobs_v3");
     return saved ? JSON.parse(saved) : MOCK_JOBS;
   });
+  //  Auto-expire promoted jobs
+  useEffect(() => {
+    setJobs((prev) => {
+      const now = new Date();
+
+      const updated = prev.map((job) => {
+        if (
+          job.isPromoted &&
+          job.promotionExpiresAt &&
+          new Date(job.promotionExpiresAt) <= now
+        ) {
+          return {
+            ...job,
+            isPromoted: false,
+            promotionRadiusKm: undefined,
+            promotionExpiresAt: undefined,
+          };
+        }
+        return job;
+      });
+
+      localStorage.setItem("nearbykaam_jobs_v3", JSON.stringify(updated));
+      return updated;
+    });
+  }, []);
 
   /* ---------------- Language (GLOBAL) ---------------- */
   const [isChangingLanguage, setIsChangingLanguage] = useState(false);
@@ -127,6 +152,12 @@ const App: React.FC = () => {
       localStorage.setItem("nearbykaam_jobs_v3", JSON.stringify(next));
       return next;
     });
+  };
+
+  const onUpdateJob = async (jobId: string, updates: Partial<Job>) => {
+    updateJobsAtomic((prev) =>
+      prev.map((job) => (job.id === jobId ? { ...job, ...updates } : job)),
+    );
   };
 
   /* ---------------- Auth ---------------- */
@@ -275,6 +306,7 @@ const App: React.FC = () => {
             />
             <EmployerView
               onJobSubmit={(job) => updateJobsAtomic((prev) => [...prev, job])}
+              onUpdateJob={onUpdateJob}
               allJobs={jobs}
               onChangeLanguage={() => setIsChangingLanguage(true)}
               currentUser={currentUser}

@@ -907,14 +907,6 @@ const EmployerView: React.FC<EmployerViewProps> = ({
     </div>
   );
 
-  const renderPromote = () => (
-    <div className="flex-1 flex items-center justify-center bg-slate-50">
-      <p className="text-sm font-black text-slate-400 uppercase tracking-widest">
-        Promote Job – Coming Next
-      </p>
-    </div>
-  );
-
   const renderSuccess = () => (
     <div className="fixed inset-0 z-[200] bg-white flex flex-col items-center justify-center p-10 text-center animate-in zoom-in-95 duration-500 h-screen w-full">
       <div className="w-24 h-24 bg-emerald-100 border-4 border-emerald-200 text-emerald-500 rounded-full flex items-center justify-center mb-8 text-4xl shadow-xl shadow-emerald-50">
@@ -941,7 +933,6 @@ const EmployerView: React.FC<EmployerViewProps> = ({
       {view === "HOME" && renderHome()}
       {view === "POST_JOB" && renderPostJob()}
       {view === "SUCCESS" && renderSuccess()}
-      {view === "PROMOTE" && renderPromote()}
 
       {view === "HOME" && (
         <div className="fixed bottom-24 left-1/2 -translate-x-1/2 w-full px-6 flex justify-center z-30 pointer-events-none">

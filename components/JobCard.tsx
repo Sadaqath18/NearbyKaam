@@ -6,6 +6,7 @@ import {
   stopSpeaking,
   getJobReadoutText,
 } from "../services/geminiService";
+import { isPromotionActive } from "../utils/promotion";
 
 interface JobCardProps {
   job: Job;
@@ -167,8 +168,8 @@ const JobCard: React.FC<JobCardProps> = ({
       onClick={() => setIsExpanded(!isExpanded)}
       className={`bg-white rounded-[32px] border transition-all duration-300 cursor-pointer overflow-hidden relative ${isExpanded ? "border-indigo-600 shadow-xl" : "border-slate-100 shadow-sm active:scale-[0.98]"}`}
     >
-      {job.isPromoted && (
-        <span className="absolute top-3 right-3 bg-yellow-400 text-black text-[9px] font-black px-3 py-1 rounded-full uppercase z-10">
+      {isPromotionActive(job) && (
+        <span className="absolute top-3 right-3 bg-yellow-400 text-black text-[9px] font-black px-3 py-1 rounded-full uppercase">
           Promoted
         </span>
       )}
@@ -262,14 +263,14 @@ const JobCard: React.FC<JobCardProps> = ({
               </span>
             </div>
 
-            {!isGuest && job.isPromoted && job.promotionExpiresAt && (
+            {!isGuest && isPromotionActive(job) && job.promotionExpiresAt && (
               <div className="mt-2 text-[10px] font-black text-slate-500">
                 Promotion ends on{" "}
                 {new Date(job.promotionExpiresAt).toLocaleDateString()}
               </div>
             )}
 
-            {!isGuest && job.isPromoted && (
+            {!isGuest && isPromotionActive(job) && (
               <button
                 onClick={(e) => {
                   e.stopPropagation();
