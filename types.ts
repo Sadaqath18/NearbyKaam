@@ -53,33 +53,44 @@ export interface Job {
   id: string;
   title: string;
   jobRole?: string;
-  category: JobCategory;
+  category?: JobCategory;
   industry?: string;
+
   employerFirstName?: string;
   employerId: string;
   employerName: string;
+
   ownerName?: string;
   shopName?: string;
+
   description?: string;
+
   contact: ContactInfo;
+
   shopPhoto: ShopPhoto | null;
   location: Location;
   distance?: number;
   salaryAmount: string;
   salaryType: SalaryType;
   isVerified: boolean;
+
   isPromoted?: boolean;
+  promotionRadiusKm?: number;
   promotionExpiresAt?: string;
   promotionPlanId?: string;
+
   isReported?: boolean;
   status: JobStatus;
   isLive: boolean;
   approvedAt?: string;
   approvedBy?: string;
+
   callCount: number;
   whatsappCount: number;
+
   createdAt: string;
   expiryDays: number;
+
   adminNote?: string;
   experienceLevel?: string;
   employmentType?: string;
@@ -177,4 +188,12 @@ export interface VoiceSearchFilters {
   category?: JobCategory;
   keyword?: string;
   intentSummary: string;
+}
+
+export interface PromotionPlan {
+  id: string;
+  radiusKm: number;
+  price: number;
+  popular?: boolean;
+  isActive: boolean;
 }

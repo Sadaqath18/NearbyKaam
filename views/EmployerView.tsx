@@ -16,11 +16,11 @@ import EmployerBottomNav, {
   EmployerTab,
 } from "../components/EmployerBottomNav";
 import { useLanguage } from "../context/LanguageContext";
-import JobCard from "../components/JobCard";
 import MatchingWorkersView from "../components/MatchingWorkersView";
 import EmployerJobDetail from "../components/EmployerJobDetail";
 import EmployerPromoteView from "../components/EmployerPromoteView";
 import PromoteJobView from "./PromoteJobView";
+import { getPromotionPlans } from "../services/promotionPlanService";
 
 interface EmployerViewProps {
   onJobSubmit: (job: Job) => void;
@@ -28,6 +28,8 @@ interface EmployerViewProps {
   onChangeLanguage: () => void;
   currentUser: User | null;
   onLogout: () => void;
+
+  onUpdateJob: (jobId: string, updates: Partial<Job>) => Promise<void>;
 }
 
 const MOCK_APPLICANTS: WorkerProfile[] = [
@@ -49,12 +51,19 @@ const MOCK_APPLICANTS: WorkerProfile[] = [
   },
 ];
 
+function addDays(date: Date, days: number) {
+  const d = new Date(date);
+  d.setDate(d.getDate() + days);
+  return d.toISOString();
+}
+
 const EmployerView: React.FC<EmployerViewProps> = ({
   onJobSubmit,
   allJobs,
   currentUser,
   onChangeLanguage,
   onLogout,
+  onUpdateJob,
 }) => {
   const [employerProfile, setEmployerProfile] =
     useState<EmployerProfile | null>(null);
@@ -127,12 +136,7 @@ const EmployerView: React.FC<EmployerViewProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  const promotionPlans = [
-    { id: "5km", radiusKm: 5, price: 199 },
-    { id: "10km", radiusKm: 10, price: 299 },
-    { id: "20km", radiusKm: 20, price: 399, popular: true },
-    { id: "30km", radiusKm: 30, price: 499 },
-  ];
+  const promotionPlans = getPromotionPlans().filter((p) => p.isActive);
 
   const myJobs = allJobs.filter(
     (j) => j.employerId === "me" || j.contact.callNumber === currentUser?.phone,
@@ -325,11 +329,22 @@ const EmployerView: React.FC<EmployerViewProps> = ({
     employerJobCategories.includes(worker.jobType),
   );
 
-  const handlePromote = (jobId: string, planId: string) => {
-    console.log("Promote job:", jobId, "with plan:", planId);
+  const handlePromote = async (jobId: string, planId: string) => {
+    const plan = promotionPlans.find((p) => p.id === planId);
+    if (!plan) return;
 
-    // TEMP: later replace with payment + admin approval
-    alert(`Promotion started for job ${jobId} with plan ${planId}`);
+    // (Later) integrate payment here
+    const paymentSuccess = true;
+
+    if (!paymentSuccess) return;
+
+    await onUpdateJob(jobId, {
+      isPromoted: true,
+      promotionRadiusKm: plan.radiusKm,
+      promotionExpiresAt: addDays(new Date(), 7), // or plan-based later
+    });
+
+    setView("PROMOTE"); // or JOBS / DASHBOARD
   };
 
   const renderHome = () => (

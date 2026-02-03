@@ -21,6 +21,7 @@ import CreateEntitySelectorModal from "../components/admin/CreateEntitySelectorM
 
 import CategoryGrid from "../components/CategoryGrid";
 import JobCard from "../components/JobCard";
+import AdminPromotionPlans from "../components/admin/AdminPromotionPlans";
 
 interface AdminViewProps {
   jobs: Job[];
@@ -41,6 +42,7 @@ type AdminModule =
   | "EMPLOYERS"
   | "WORKERS"
   | "ADMINS"
+  | "PROMOTIONS"
   | "LOGS"
   | "SETTINGS";
 
@@ -217,6 +219,7 @@ const AdminView: React.FC<AdminViewProps> = ({
           { id: "EMPLOYERS", icon: "fa-shop", label: "Employers" },
           { id: "WORKERS", icon: "fa-users", label: "Workers" },
           { id: "ADMINS", icon: "fa-user-shield", label: "Staff" },
+          { id: "PROMOTIONS", icon: "fa-bolt", label: "Promotions" },
           { id: "LOGS", icon: "fa-list-ul", label: "Audit" },
         ].map((mod) => (
           <button
@@ -1100,6 +1103,8 @@ const AdminView: React.FC<AdminViewProps> = ({
             </div>
           </div>
         )}
+
+        {activeModule === "PROMOTIONS" && <AdminPromotionPlans />}
 
         {activeModule === "LOGS" && (
           <div className="p-6 space-y-4 animate-in fade-in duration-300 text-left">
