@@ -18,11 +18,9 @@ import CreateJobModal from "../components/admin/CreateJobModal";
 import CreateWorkerModal from "../components/admin/CreateWorkerModal";
 import CreateAdminModal from "../components/admin/CreateAdminModal";
 import CreateEntitySelectorModal from "../components/admin/CreateEntitySelectorModal";
-
 import CategoryGrid from "../components/CategoryGrid";
 import JobCard from "../components/JobCard";
 import AdminPromotionPlans from "../components/admin/AdminPromotionPlans";
-import AdminPricingView from "./AdminViewPricing";
 
 interface AdminViewProps {
   jobs: Job[];
@@ -45,8 +43,7 @@ type AdminModule =
   | "ADMINS"
   | "PROMOTIONS"
   | "LOGS"
-  | "SETTINGS"
-  | "PRICING";
+  | "SETTINGS";
 
 const AdminView: React.FC<AdminViewProps> = ({
   jobs,
@@ -62,6 +59,7 @@ const AdminView: React.FC<AdminViewProps> = ({
   const [selectedWorker, setSelectedWorker] = useState<WorkerProfile | null>(
     null,
   );
+
   const [selectedEmployer, setSelectedEmployer] = useState<any | null>(null);
   const [showCreateModal, setShowCreateModal] = useState<
     "SELECT" | "JOB" | "EMPLOYER" | "WORKER" | "ADMIN" | null
@@ -227,7 +225,6 @@ const AdminView: React.FC<AdminViewProps> = ({
             { id: "ADMINS", icon: "fa-user-shield", label: "Staff" },
             { id: "PROMOTIONS", icon: "fa-bolt", label: "Promotions" },
             { id: "LOGS", icon: "fa-list-ul", label: "Audit" },
-            { id: "PRICING", icon: "fa-tags", label: "Pricing" },
           ].map((mod) => (
             <button
               key={mod.id}
@@ -1115,8 +1112,6 @@ const AdminView: React.FC<AdminViewProps> = ({
         )}
 
         {activeModule === "PROMOTIONS" && <AdminPromotionPlans />}
-
-        {activeModule === "PRICING" && <AdminPricingView />}
 
         {activeModule === "LOGS" && (
           <div className="p-6 space-y-4 animate-in fade-in duration-300 text-left">
