@@ -113,6 +113,7 @@ const WorkerView: React.FC<WorkerViewProps> = ({
       profile.jobType
     );
   };
+  const [hasSkippedProfile, setHasSkippedProfile] = useState(false);
 
   const [profile, setProfile] = useState<WorkerProfile>(() => {
     if (!currentUser?.phone) {
@@ -128,14 +129,16 @@ const WorkerView: React.FC<WorkerViewProps> = ({
 
   // 🔐 Profile completion gate
   const mustCompleteProfile =
-    !isGuest && currentUser !== null && !isProfileComplete(profile);
+    !isGuest &&
+    currentUser !== null &&
+    !isProfileComplete(profile) &&
+    !hasSkippedProfile;
 
-    useEffect(() => {
-  if (mustCompleteProfile) {
-    setIsProfileOpen(true);
-  }
-}, [mustCompleteProfile]);
-
+  useEffect(() => {
+    if (mustCompleteProfile) {
+      setIsProfileOpen(true);
+    }
+  }, [mustCompleteProfile]);
 
   useEffect(() => {
     if (!currentUser?.phone) return;
@@ -447,10 +450,23 @@ const WorkerView: React.FC<WorkerViewProps> = ({
     setIsProfileOpen(false);
   };
   const handleExitToGuest = () => {
+    setHasSkippedProfile(true);
     setShowExitConfirm(false);
     setIsProfileOpen(false);
     onAuthRequired(); // OR setGuestMode(true)
   };
+
+  useEffect(() => {
+    const skipped = localStorage.getItem("worker_skipped_profile");
+    if (skipped === "true") setHasSkippedProfile(true);
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem(
+      "worker_skipped_profile",
+      hasSkippedProfile ? "true" : "false",
+    );
+  }, [hasSkippedProfile]);
 
   return (
     <div className="relative max-w-md mx-auto flex flex-col h-full bg-white overflow-hidden">
@@ -461,15 +477,12 @@ const WorkerView: React.FC<WorkerViewProps> = ({
         onSave={handleSaveProfile}
         onChangeLanguage={onChangeLanguage}
         forceComplete={mustCompleteProfile}
-         onExitRequest={() => setShowExitConfirm(true)}   // forced flow
-  onClose={() => setIsProfileOpen(false)}          // normal close
-      
+        onExitRequest={() => setShowExitConfirm(true)} // forced flow
+        onClose={() => setIsProfileOpen(false)} // normal close
       />
 
       {/*MAIN CONTENT */}
-      <div
-        className="flex-1 overflow-hidden"
-      >
+      <div className="flex-1 overflow-hidden">
         {viewState === "INDUSTRY_SELECT" ? (
           /* CATEGORY SELECTION VIEW */
           <div className="flex-1 flex flex-col h-full bg-slate-50">
@@ -581,12 +594,10 @@ const WorkerView: React.FC<WorkerViewProps> = ({
 
                       {/* Exit to Guest */}
                       <button
-                        onClick={() => {
-                          setShowExitConfirm(false);
-                          setIsProfileOpen(false);
-                          onAuthRequired(); // switch to guest flow
-                        }}
-                        className="w-full py-4 bg-white border border-gray-200 text-gray-400 rounded-2xl font-black uppercase text-[10px] tracking-widest"
+                        onClick={handleExitToGuest}
+                        className="w-full py-4 bg-white border border-gray-200
+    text-gray-400 rounded-2xl font-black uppercase
+    text-[10px] tracking-widest"
                       >
                         Browse as Guest
                       </button>
