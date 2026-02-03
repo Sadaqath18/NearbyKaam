@@ -29,7 +29,7 @@ let activeAudioSource: AudioBufferSourceNode | null = null;
 let audioContext: AudioContext | null = null;
 
 function getAudioContext() {
-  if (!audioContext) {
+  if (!audioContext || audioContext.state === "closed") {
     audioContext = new (
       window.AudioContext || (window as any).webkitAudioContext
     )({ sampleRate: 24000 });
@@ -38,12 +38,13 @@ function getAudioContext() {
 }
 
 export function stopSpeaking() {
-  if (window.speechSynthesis) {
-    window.speechSynthesis.cancel();
-  }
   if (activeAudioSource) {
     activeAudioSource.stop();
     activeAudioSource = null;
+  }
+
+  if (window.speechSynthesis?.speaking) {
+    window.speechSynthesis.cancel();
   }
 }
 
@@ -79,7 +80,7 @@ async function decodeAudioData(
   data: Uint8Array,
   ctx: AudioContext,
   sampleRate: number,
-  numChannels: number,
+  numChannels: 1, // NOTE: Gemini currently returns mono PCM. Adjust if stereo is enabled.
 ): Promise<AudioBuffer> {
   const dataInt16 = new Int16Array(data.buffer);
   const frameCount = dataInt16.length / numChannels;
@@ -164,7 +165,9 @@ export async function speakText(
         responseModalities: [Modality.AUDIO],
         speechConfig: {
           voiceConfig: {
-            prebuiltVoiceConfig: { voiceName: "Kore" }, // Kore is great for clear announcements
+            prebuiltVoiceConfig: {
+              voiceName: langCode === "en" ? "Kore" : "Alnilam",
+            },
           },
         },
       },
@@ -248,3 +251,37 @@ export async function parseJobSearch(
     return { intentSummary: "Searching..." };
   }
 }
+
+export const getPromotionPlanExplanation = async (
+  plans: { radiusKm: number; price: number; popular?: boolean }[],
+  selectedRadius?: number,
+): Promise<string> => {
+  let prompt = "";
+
+  if (selectedRadius) {
+    const plan = plans.find((p) => p.radiusKm === selectedRadius);
+    prompt = `Explain this job promotion plan simply.
+    Radius: ${plan?.radiusKm} kilometers.
+    Price: rupees ${plan?.price}.
+    Audience: nearby workers.
+    Keep it under 20 words.`;
+  } else {
+    prompt = `Explain job promotion plans briefly.
+    ${plans
+      .map(
+        (p) =>
+          `${p.radiusKm} kilometer plan for rupees ${p.price}${
+            p.popular ? ", most popular" : ""
+          }`,
+      )
+      .join(". ")}.
+    Keep it under 25 words.`;
+  }
+
+  const response = await ai.models.generateContent({
+    model: "gemini-3-flash-preview",
+    contents: [{ parts: [{ text: prompt }] }],
+  });
+
+  return response.text.trim();
+};

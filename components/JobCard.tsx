@@ -15,6 +15,7 @@ interface JobCardProps {
   isGuest?: boolean;
   onAuthRequired?: () => void;
   workerProfile?: WorkerProfile;
+  onReviewPromotion?: (job: Job) => void;
 }
 
 /* ---------- MAP HELPER ---------- */
@@ -46,6 +47,7 @@ const JobCard: React.FC<JobCardProps> = ({
   isGuest = false,
   onAuthRequired,
   workerProfile,
+  onReviewPromotion,
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -165,6 +167,12 @@ const JobCard: React.FC<JobCardProps> = ({
       onClick={() => setIsExpanded(!isExpanded)}
       className={`bg-white rounded-[32px] border transition-all duration-300 cursor-pointer overflow-hidden relative ${isExpanded ? "border-indigo-600 shadow-xl" : "border-slate-100 shadow-sm active:scale-[0.98]"}`}
     >
+      {job.isPromoted && (
+        <span className="absolute top-3 right-3 bg-yellow-400 text-black text-[9px] font-black px-3 py-1 rounded-full uppercase z-10">
+          Promoted
+        </span>
+      )}
+
       {showCopiedToast && (
         <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 bg-slate-900 text-white text-[9px] font-black uppercase tracking-widest px-4 py-2 rounded-full shadow-lg animate-in fade-in slide-in-from-top-2">
           Link Copied!
@@ -244,14 +252,37 @@ const JobCard: React.FC<JobCardProps> = ({
         </div>
 
         <div className="flex justify-between items-center mt-5 pt-4 border-t border-slate-50">
-          <div className="flex items-center gap-3">
-            <span className="text-indigo-600 font-black text-sm">
-              ₹{job.salaryAmount} / {job.salaryType === "DAY" ? "Day" : "Mo"}
-            </span>
-            <span className="text-[8px] font-bold text-slate-300 uppercase tracking-widest">
-              • {getTimeAgo(job.createdAt)}
-            </span>
+          <div>
+            <div className="flex items-center gap-3">
+              <span className="text-indigo-600 font-black text-sm">
+                ₹{job.salaryAmount} / {job.salaryType === "DAY" ? "Day" : "Mo"}
+              </span>
+              <span className="text-[8px] font-bold text-slate-300 uppercase tracking-widest">
+                • {getTimeAgo(job.createdAt)}
+              </span>
+            </div>
+
+            {!isGuest && job.isPromoted && job.promotionExpiresAt && (
+              <div className="mt-2 text-[10px] font-black text-slate-500">
+                Promotion ends on{" "}
+                {new Date(job.promotionExpiresAt).toLocaleDateString()}
+              </div>
+            )}
+
+            {!isGuest && job.isPromoted && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onReviewPromotion?.(job);
+                  // call parent handler via prop
+                }}
+                className="mt-1 text-[10px] font-black text-indigo-600 uppercase"
+              >
+                Review / Change Promotion
+              </button>
+            )}
           </div>
+
           {job.isVerified && (
             <div className="flex items-center gap-1.5 bg-blue-50 px-3 py-1 rounded-full">
               <i className="fa-solid fa-shield-halved text-[9px] text-blue-500"></i>

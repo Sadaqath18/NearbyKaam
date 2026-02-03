@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { Job, JobCategory, SalaryType } from "../../types";
 import { CATEGORIES } from "../../constants";
-import { EMPLOYER_INDUSTRIES } from "@/constants/employerIndustries";
+import { EMPLOYER_INDUSTRIES } from "../../constants/employerIndustries";
 
 interface EmployerLite {
   id: string;

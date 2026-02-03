@@ -1,6 +1,6 @@
 import React from "react";
 
-export type EmployerTab = "HOME" | "MY_JOBS" | "MATCHING_WORKERS" | "PROFILE";
+export type EmployerTab = "HOME" | "PROMOTE" | "MATCHING_WORKERS" | "PROFILE";
 
 interface EmployerBottomNavProps {
   activeTab: EmployerTab;
@@ -17,8 +17,8 @@ const EmployerBottomNav: React.FC<EmployerBottomNavProps> = ({
     icon: string;
   }[] = [
     { id: "HOME", label: "Home", icon: "fa-house" },
-    { id: "MY_JOBS", label: "My Jobs", icon: "fa-briefcase" },
     { id: "MATCHING_WORKERS", label: "Workers", icon: "fa-users" },
+    { id: "PROMOTE", label: "Promote", icon: "fa-bolt" },
     { id: "PROFILE", label: "Profile", icon: "fa-user" },
   ];
 

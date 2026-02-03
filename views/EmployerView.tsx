@@ -18,6 +18,9 @@ import EmployerBottomNav, {
 import { useLanguage } from "../context/LanguageContext";
 import JobCard from "../components/JobCard";
 import MatchingWorkersView from "../components/MatchingWorkersView";
+import EmployerJobDetail from "../components/EmployerJobDetail";
+import EmployerPromoteView from "../components/EmployerPromoteView";
+import PromoteJobView from "./PromoteJobView";
 
 interface EmployerViewProps {
   onJobSubmit: (job: Job) => void;
@@ -58,11 +61,13 @@ const EmployerView: React.FC<EmployerViewProps> = ({
 
   const [view, setView] = useState<
     | "HOME"
-    | "MY_JOBS"
     | "MATCHING_WORKERS"
+    | "PROMOTE"
+    | "PROMOTE_JOB"
     | "POST_JOB"
     | "APPLICANTS"
     | "SUCCESS"
+    | "JOB_DETAIL"
   >("HOME");
 
   useEffect(() => {
@@ -74,10 +79,10 @@ const EmployerView: React.FC<EmployerViewProps> = ({
     if (saved) {
       setEmployerProfile(JSON.parse(saved) as EmployerProfile);
     } else {
-      const fresh = createEmptyEmployerProfile(
-        currentUser.phone,
-        undefined, //industry intentionally undefined
-      );
+      const fresh = createEmptyEmployerProfile(currentUser.phone, undefined);
+
+      setEmployerProfile(fresh);
+      localStorage.setItem(key, JSON.stringify(fresh));
     }
   }, [currentUser?.phone]);
 
@@ -115,12 +120,19 @@ const EmployerView: React.FC<EmployerViewProps> = ({
 
   const [otpValue, setOtpValue] = useState(["", "", "", "", "", ""]);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [selectedJobForApplicants, setSelectedJobForApplicants] =
-    useState<Job | null>(null);
+  const [selectedJob, setSelectedJob] = useState<Job | null>(null);
+
   const [playingAudioId, setPlayingAudioId] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  const promotionPlans = [
+    { id: "5km", radiusKm: 5, price: 199 },
+    { id: "10km", radiusKm: 10, price: 299 },
+    { id: "20km", radiusKm: 20, price: 399, popular: true },
+    { id: "30km", radiusKm: 30, price: 499 },
+  ];
 
   const myJobs = allJobs.filter(
     (j) => j.employerId === "me" || j.contact.callNumber === currentUser?.phone,
@@ -256,8 +268,9 @@ const EmployerView: React.FC<EmployerViewProps> = ({
         salaryType: postData.salaryType,
         isVerified: false,
         isPromoted: false,
-        status: "PENDING_APPROVAL",
-        isLive: false,
+        status: "PENDING_APPROVAL", // admin must approve before job goes live
+        isLive: false, // becomes true only after approval
+
         callCount: 0,
         whatsappCount: 0,
         createdAt: new Date().toISOString(),
@@ -289,8 +302,16 @@ const EmployerView: React.FC<EmployerViewProps> = ({
   const [activeTab, setActiveTab] = useState<EmployerTab>("HOME");
   useEffect(() => {
     if (activeTab === "HOME") setView("HOME");
-    if (activeTab === "MY_JOBS") setView("MY_JOBS"); // filtered later
-    if (activeTab === "MATCHING_WORKERS") setView("MATCHING_WORKERS");
+    if (activeTab === "MATCHING_WORKERS") {
+      if (!employerProfile?.industry) {
+        setIsEmployerProfileOpen(true);
+        setActiveTab("HOME");
+        return;
+      }
+      setView("MATCHING_WORKERS");
+    }
+
+    if (activeTab === "PROMOTE") setView("PROMOTE");
     if (activeTab === "PROFILE") setIsEmployerProfileOpen(true);
   }, [activeTab]);
 
@@ -299,10 +320,17 @@ const EmployerView: React.FC<EmployerViewProps> = ({
     ? [employerProfile.industry]
     : [];
 
-  // FINAL filtered workers (industry-based)
+  // Workers shown in Workers tab
   const matchingWorkers = MOCK_APPLICANTS.filter((worker) =>
     employerJobCategories.includes(worker.jobType),
   );
+
+  const handlePromote = (jobId: string, planId: string) => {
+    console.log("Promote job:", jobId, "with plan:", planId);
+
+    // TEMP: later replace with payment + admin approval
+    alert(`Promotion started for job ${jobId} with plan ${planId}`);
+  };
 
   const renderHome = () => (
     <div className="flex-1 overflow-y-auto pb-32 no-scrollbar bg-white">
@@ -380,8 +408,8 @@ const EmployerView: React.FC<EmployerViewProps> = ({
             <div
               key={job.id}
               onClick={() => {
-                setSelectedJobForApplicants(job);
-                setView("APPLICANTS");
+                setSelectedJob(job);
+                setView("JOB_DETAIL");
               }}
               className="bg-white p-5 rounded-[32px] border-2 border-slate-100 shadow-sm flex items-center justify-between active:scale-[0.98] transition-all cursor-pointer"
             >
@@ -864,16 +892,11 @@ const EmployerView: React.FC<EmployerViewProps> = ({
     </div>
   );
 
-  const renderMyJobs = () => (
-    <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-slate-50">
-      {myJobs.length === 0 ? (
-        <div className="py-20 text-center opacity-40">
-          <i className="fa-solid fa-clipboard-list text-6xl mb-4"></i>
-          <p className="font-black uppercase text-[10px]">No jobs posted yet</p>
-        </div>
-      ) : (
-        myJobs.map((job) => <JobCard key={job.id} job={job} />)
-      )}
+  const renderPromote = () => (
+    <div className="flex-1 flex items-center justify-center bg-slate-50">
+      <p className="text-sm font-black text-slate-400 uppercase tracking-widest">
+        Promote Job – Coming Next
+      </p>
     </div>
   );
 
@@ -898,104 +921,12 @@ const EmployerView: React.FC<EmployerViewProps> = ({
     </div>
   );
 
-  const renderApplicants = () => (
-    <div className="flex-1 flex flex-col bg-slate-50">
-      <div className="px-6 pt-12 pb-6 flex justify-between items-center bg-white border-b-2 border-slate-200 sticky top-0 z-10 shadow-sm">
-        <button
-          title="Back"
-          onClick={() => setView("HOME")}
-          className="w-11 h-11 rounded-2xl bg-slate-50 border-2 border-slate-400 flex items-center justify-center text-slate-500 active:scale-90 transition-transform shadow-sm"
-        >
-          <i className="fa-solid fa-arrow-left"></i>
-        </button>
-        <div className="text-center">
-          <h2 className="text-lg font-black text-slate-900">Applicants</h2>
-          <p className="text-[9px] font-black text-indigo-600 uppercase tracking-widest">
-            {selectedJobForApplicants?.jobRole}
-          </p>
-        </div>
-        <div className="w-11"></div>
-      </div>
-
-      <div className="flex-1 overflow-y-auto p-6 space-y-4 no-scrollbar">
-        {MOCK_APPLICANTS.map((applicant, idx) => (
-          <div
-            key={idx}
-            className="bg-white p-6 rounded-[40px] shadow-sm border-2 border-slate-100 space-y-6 animate-in slide-in-from-bottom-4 duration-300 text-left"
-          >
-            <div className="flex justify-between items-start">
-              <div className="flex items-center gap-4">
-                <div className="shrink-0 w-14 h-14 bg-orange-100 border border-orange-200 text-orange-600 rounded-2xl flex items-center justify-center text-2xl font-black">
-                  {applicant.name[0]}
-                </div>
-                <div>
-                  <h4 className="font-black text-slate-900 text-base">
-                    {applicant.name}
-                  </h4>
-                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-0.5">
-                    {applicant.preferredJobTitle}
-                  </p>
-                </div>
-              </div>
-              <div className="text-right">
-                <p className="text-indigo-600 font-black text-base">
-                  ₹{applicant.expectedSalary}
-                </p>
-              </div>
-            </div>
-            <div className="bg-slate-50 p-5 rounded-3xl border-2 border-slate-100 space-y-4 shadow-inner">
-              {applicant.resume.hasAudio && (
-                <button
-                  onClick={() =>
-                    handleAudioToggle(
-                      applicant.resume.audioUrl!,
-                      `audio-${idx}`,
-                    )
-                  }
-                  className={`w-full py-4 rounded-2xl flex items-center justify-center gap-3 transition-all active:scale-95 shadow-sm border-2 ${playingAudioId === `audio-${idx}` ? "bg-orange-600 text-white border-orange-700" : "bg-white border-orange-200 text-orange-600"}`}
-                >
-                  <i
-                    className={`fa-solid ${playingAudioId === `audio-${idx}` ? "fa-stop" : "fa-play"}`}
-                  ></i>
-                  <span className="text-[10px] font-black uppercase tracking-widest">
-                    Play Voice Intro
-                  </span>
-                </button>
-              )}
-              <div className="flex items-center gap-2 text-slate-500">
-                <i className="fa-solid fa-location-dot text-[10px] text-indigo-400"></i>
-                <span className="text-[10px] font-bold">
-                  {applicant.location?.address}
-                </span>
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-3 pt-2">
-              <a
-                href={`tel:${applicant.phone}`}
-                className="bg-slate-900 text-white font-black py-4 rounded-2xl flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-all text-[10px] uppercase tracking-widest border-b-4 border-slate-700"
-              >
-                <i className="fa-solid fa-phone"></i> Call
-              </a>
-              <a
-                href={`https://wa.me/91${applicant.phone}`}
-                className="bg-emerald-500 text-white font-black py-4 rounded-2xl flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-all text-[10px] uppercase tracking-widest border-b-4 border-emerald-700"
-              >
-                <i className="fa-brands fa-whatsapp text-lg"></i> WhatsApp
-              </a>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-
   return (
     <div className="flex-1 h-full flex flex-col bg-slate-50 overflow-hidden relative">
       {view === "HOME" && renderHome()}
-      {view === "MY_JOBS" && renderMyJobs()}
       {view === "POST_JOB" && renderPostJob()}
-      {view === "APPLICANTS" && renderApplicants()}
       {view === "SUCCESS" && renderSuccess()}
+      {view === "PROMOTE" && renderPromote()}
 
       {view === "HOME" && (
         <div className="fixed bottom-24 left-1/2 -translate-x-1/2 w-full px-6 flex justify-center z-30 pointer-events-none">
@@ -1004,7 +935,30 @@ const EmployerView: React.FC<EmployerViewProps> = ({
       )}
 
       {view === "MATCHING_WORKERS" && (
-        <MatchingWorkersView workers={matchingWorkers} /> // or real workers list later
+        <MatchingWorkersView workers={matchingWorkers} />
+      )}
+
+      {view === "JOB_DETAIL" && selectedJob && (
+        <EmployerJobDetail job={selectedJob} onBack={() => setView("HOME")} />
+      )}
+
+      {view === "PROMOTE" && (
+        <EmployerPromoteView
+          jobs={myJobs}
+          onPromote={(job) => {
+            setSelectedJob(job);
+            setView("PROMOTE_JOB"); // or PROMOTE_DETAIL
+          }}
+        />
+      )}
+
+      {view === "PROMOTE_JOB" && selectedJob && (
+        <PromoteJobView
+          job={selectedJob}
+          plans={promotionPlans}
+          onBack={() => setView("PROMOTE")}
+          onBuy={(planId) => handlePromote(selectedJob.id, planId)}
+        />
       )}
 
       {employerProfile && (

@@ -8,34 +8,29 @@ interface Props {
 }
 
 const MatchingWorkersView: React.FC<Props> = ({ workers }) => {
+  // ✅ Proper empty state (early return)
+  if (!workers || workers.length === 0) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center text-center px-6 bg-slate-50">
+        <i className="fa-solid fa-users-slash text-6xl text-slate-200 mb-4"></i>
+        <h3 className="font-black text-slate-700 text-lg">
+          No matching workers yet
+        </h3>
+        <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-2">
+          Workers from your industry will appear here
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="flex-1 overflow-y-auto p-6 space-y-4 no-scrollbar bg-slate-50">
       <h2 className="text-sm font-black uppercase tracking-widest text-slate-600">
         Nearby Workers
       </h2>
 
-      {workers.length === 0 && (
-        <div className="py-20 text-center opacity-40">
-          <i className="fa-solid fa-users text-5xl mb-4"></i>
-          <p className="text-[10px] font-black uppercase tracking-widest">
-            No workers found nearby
-          </p>
-        </div>
-      )}
-
-      {workers.map((w, idx) => {
-        const cat = CATEGORIES.find((c) => c.id === w.jobType);
-
-        if (workers.length === 0) {
-          return (
-            <div className="py-20 text-center opacity-40">
-              <i className="fa-solid fa-users-slash text-6xl mb-4"></i>
-              <p className="font-black uppercase text-[10px]">
-                No matching workers found
-              </p>
-            </div>
-          );
-        }
+      {workers.map((worker, idx) => {
+        const category = CATEGORIES.find((c) => c.id === worker.jobType);
 
         return (
           <div
@@ -44,25 +39,34 @@ const MatchingWorkersView: React.FC<Props> = ({ workers }) => {
           >
             <div className="flex items-center gap-4 min-w-0">
               <div
-                className={`w-12 h-12 rounded-2xl flex items-center justify-center text-white ${cat?.color}`}
+                className={`w-12 h-12 rounded-2xl flex items-center justify-center text-white ${
+                  category?.color ?? "bg-slate-400"
+                }`}
               >
-                <i className={`fa-solid ${cat?.icon}`}></i>
+                <i className={`fa-solid ${category?.icon ?? "fa-user"}`}></i>
               </div>
 
-              <div className="min-w-0">
-                <p className="font-black text-sm truncate">{w.name}</p>
+              <div className="min-w-0 space-y-1">
+                <p className="font-black text-sm truncate">{worker.name}</p>
+
                 <p className="text-[9px] font-bold uppercase text-slate-400">
-                  {w.preferredJobTitle}
+                  {worker.preferredJobTitle}
                 </p>
+
                 <p className="text-[9px] text-slate-500 truncate">
-                  {w.location?.address}
+                  {worker.location?.address}
                 </p>
+
+                {/* ✅ Industry badge */}
+                <span className="inline-block mt-1 px-3 py-1 bg-indigo-50 text-indigo-600 rounded-full text-[9px] font-black uppercase tracking-widest">
+                  {worker.jobType.replace(/_/g, " ")}
+                </span>
               </div>
             </div>
 
             <a
-              href={`tel:${w.phone}`}
-              className="px-4 py-2 bg-emerald-500 text-white text-[9px] font-black rounded-full uppercase"
+              href={`tel:${worker.phone}`}
+              className="px-4 py-2 bg-emerald-500 text-white text-[9px] font-black rounded-full uppercase active:scale-95 transition"
             >
               Call
             </a>

@@ -68,7 +68,9 @@ export interface Job {
   salaryAmount: string;
   salaryType: SalaryType;
   isVerified: boolean;
-  isPromoted: boolean;
+  isPromoted?: boolean;
+  promotionExpiresAt?: string;
+  promotionPlanId?: string;
   isReported?: boolean;
   status: JobStatus;
   isLive: boolean;
