@@ -270,6 +270,12 @@ const JobCard: React.FC<JobCardProps> = ({
               </div>
             )}
 
+            {job.promotion?.isActive && (
+              <span className="absolute top-3 right-3 text-[9px] font-black bg-yellow-400 text-black px-2 py-1 rounded-full uppercase">
+                Sponsored
+              </span>
+            )}
+
             {!isGuest && isPromotionActive(job) && (
               <button
                 onClick={(e) => {

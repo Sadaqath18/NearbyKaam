@@ -85,6 +85,13 @@ export interface Job {
   approvedAt?: string;
   approvedBy?: string;
 
+  promotion?: {
+    isActive: boolean;
+    radiusKm: number;
+    startedAt: string;
+    expiresAt: string;
+  };
+
   callCount: number;
   whatsappCount: number;
 

@@ -284,7 +284,7 @@ const WorkerView: React.FC<WorkerViewProps> = ({
   }
 
   const processedJobs = useMemo(() => {
-    let list = allJobs.filter(
+    let list = (allJobs || []).filter(
       (j) => j.status === "APPROVED" && j.isLive === true,
     );
 
@@ -347,6 +347,33 @@ const WorkerView: React.FC<WorkerViewProps> = ({
     maxDistance,
     selectedExperience,
   ]);
+
+  const promotedJobsNearby = useMemo(() => {
+    if (!userLocation) return [];
+
+    const now = new Date();
+
+    return allJobs
+      .filter((job) => {
+        const promo = job.promotion;
+        if (!promo || !promo.isActive) return false;
+
+        return (
+          new Date(promo.startedAt) <= now && new Date(promo.expiresAt) >= now
+        );
+      })
+      .map((job) => ({
+        ...job,
+        distance: calculateDistance(
+          userLocation.lat,
+          userLocation.lng,
+          job.location.lat,
+          job.location.lng,
+        ),
+      }))
+      .filter((job) => job.distance <= job.promotion!.radiusKm)
+      .sort((a, b) => (a.distance ?? 0) - (b.distance ?? 0));
+  }, [allJobs, userLocation]);
 
   const startVoiceSearch = () => {
     const SpeechRecognition =
@@ -531,6 +558,32 @@ const WorkerView: React.FC<WorkerViewProps> = ({
                 onSelect={handleIndustrySelect}
                 selected={selectedCategory}
               />
+
+              {promotedJobsNearby.length > 0 && (
+                <div className="mt-10">
+                  <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-sm font-black uppercase tracking-widest text-slate-900">
+                      Promoted Jobs Near You
+                    </h2>
+                    <span className="text-[9px] font-black text-yellow-500 uppercase">
+                      Sponsored
+                    </span>
+                  </div>
+
+                  <div className="space-y-4">
+                    {promotedJobsNearby.slice(0, 5).map((job) => (
+                      <JobCard
+                        key={job.id}
+                        job={job}
+                        isGuest={isGuest}
+                        language={language}
+                        onReport={onReport}
+                        onAuthRequired={onAuthRequired}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         ) : (
