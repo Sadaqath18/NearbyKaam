@@ -150,7 +150,10 @@ const EmployerProfileDrawer: React.FC<EmployerProfileDrawerProps> = ({
             Employer Signup
           </h2>
           <div className="flex items-center gap-3 mt-2">
-            <div className="w-32 h-2.5 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
+            <div
+              className="w-32 h-2.5 bg-slate-100 rounded-full overflow-y-auto
+ border border-slate-200"
+            >
               <div
                 className="h-full bg-indigo-600 transition-all duration-500"
                 style={{ width: `${progressPercent}%` }}
@@ -283,7 +286,8 @@ const EmployerProfileDrawer: React.FC<EmployerProfileDrawerProps> = ({
               aria-label="Upload shop photo"
               title="Upload shop photo"
               onClick={() => fileInputRef.current?.click()}
-              className="aspect-video w-full rounded-[32px] border-4 border-dashed border-slate-400 flex flex-col items-center justify-center cursor-pointer overflow-hidden bg-slate-50 active:bg-slate-100 transition-all"
+              className="aspect-video w-full rounded-[32px] border-4 border-dashed border-slate-400 flex flex-col items-center justify-center cursor-pointer overflow-y-auto
+ bg-slate-50 active:bg-slate-100 transition-all"
             >
               {localProfile.shopPhoto ? (
                 <img
@@ -480,7 +484,8 @@ const EmployerProfileDrawer: React.FC<EmployerProfileDrawerProps> = ({
           </label>
           <div
             onClick={() => fileInputRef.current?.click()}
-            className="aspect-video w-full rounded-[32px] border-4 border-dashed border-slate-400 flex items-center justify-center cursor-pointer overflow-hidden bg-slate-50 active:bg-slate-100 transition-all"
+            className="aspect-video w-full rounded-[32px] border-4 border-dashed border-slate-400 flex items-center justify-center cursor-pointer overflow-y-auto
+ bg-slate-50 active:bg-slate-100 transition-all"
           >
             {localProfile.shopPhoto ? (
               <img

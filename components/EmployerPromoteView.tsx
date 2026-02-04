@@ -8,7 +8,10 @@ interface Props {
 
 const EmployerPromoteView: React.FC<Props> = ({ jobs, onPromote }) => {
   return (
-    <div className="flex-1 flex flex-col bg-slate-50 overflow-hidden">
+    <div
+      className="flex-1 flex flex-col bg-slate-50 overflow-y-auto
+"
+    >
       {/* HEADER */}
       <div className="px-6 pt-12 pb-6 bg-white border-b-2 border-slate-200">
         <h2 className="text-lg font-black">Promote Jobs</h2>

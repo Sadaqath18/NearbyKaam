@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { LANGUAGES } from "../constants";
+import { LANGUAGES } from "../appConstants";
 import { speakText } from "../services/geminiService";
 
 interface LanguageSelectionViewProps {
@@ -68,7 +68,8 @@ const LanguageSelectionView: React.FC<LanguageSelectionViewProps> = ({
 
   return (
     <div
-      className="flex flex-col h-full bg-slate-50 overflow-hidden relative"
+      className="flex flex-col h-full bg-slate-50 overflow-y-auto
+ relative"
       onClick={handleFirstInteraction}
       onTouchStart={handleFirstInteraction}
     >

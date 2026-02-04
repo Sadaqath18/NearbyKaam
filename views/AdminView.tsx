@@ -12,7 +12,7 @@ import {
   EmployerProfile,
   UserRole,
 } from "../types";
-import { CATEGORIES, STATES_AND_CITIES, MOCK_JOBS } from "../constants";
+import { CATEGORIES, STATES_AND_CITIES, MOCK_JOBS } from "../appConstants";
 import CreateEmployerModal from "../components/admin/CreateEmployerModal";
 import CreateJobModal from "../components/admin/CreateJobModal";
 import CreateWorkerModal from "../components/admin/CreateWorkerModal";
@@ -364,7 +364,10 @@ const AdminView: React.FC<AdminViewProps> = ({
     if (!selectedEmployer) return null;
     return (
       <div className="fixed inset-0 z-[110] bg-black/80 backdrop-blur-md flex items-end sm:items-center justify-center p-4 animate-in fade-in duration-200">
-        <div className="bg-white w-full max-w-lg rounded-[40px] flex flex-col max-h-[90vh] overflow-hidden shadow-2xl">
+        <div
+          className="bg-white w-full max-w-lg rounded-[40px] flex flex-col max-h-[90vh] overflow-y-auto
+ shadow-2xl"
+        >
           <div className="p-6 border-b flex justify-between items-center bg-slate-900 shrink-0">
             <div className="text-left">
               <h2 className="text-xl font-black text-white leading-none">
@@ -569,7 +572,10 @@ const AdminView: React.FC<AdminViewProps> = ({
     const cat = CATEGORIES.find((c) => c.id === selectedJob.category);
     return (
       <div className="fixed inset-0 z-[110] bg-black/80 backdrop-blur-md flex items-end sm:items-center justify-center p-4 animate-in fade-in duration-200">
-        <div className="bg-white w-full max-w-lg rounded-[40px] flex flex-col max-h-[90vh] overflow-hidden shadow-2xl">
+        <div
+          className="bg-white w-full max-w-lg rounded-[40px] flex flex-col max-h-[90vh] overflow-y-auto
+ shadow-2xl"
+        >
           <div className="p-6 border-b flex justify-between items-center bg-slate-50 shrink-0">
             <div className="text-left">
               <h2 className="text-xl font-black text-slate-900 leading-none">
@@ -822,7 +828,10 @@ const AdminView: React.FC<AdminViewProps> = ({
                   <span>{state}</span>
                   <span>{85 - i * 12}% Fill Rate</span>
                 </div>
-                <div className="w-full h-2 bg-slate-50 rounded-full overflow-hidden">
+                <div
+                  className="w-full h-2 bg-slate-50 rounded-full overflow-y-auto
+"
+                >
                   <div
                     className="h-full bg-indigo-500 rounded-full"
                     style={{ width: `${85 - i * 12}%` }}
@@ -837,7 +846,10 @@ const AdminView: React.FC<AdminViewProps> = ({
   );
 
   return (
-    <div className="bg-slate-50 h-full flex flex-col overflow-hidden safe-area-bottom">
+    <div
+      className="bg-slate-50 h-full flex flex-col overflow-y-auto
+ safe-area-bottom"
+    >
       {renderAdminHeader()}
       {isFilterOpen && renderFilterPanel()}
       {renderJobAuditModal()}

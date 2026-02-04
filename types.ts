@@ -67,7 +67,7 @@ export interface Job {
 
   contact: ContactInfo;
 
-  shopPhoto: ShopPhoto | null;
+  shopPhoto?: ShopPhoto | null;
   location: Location;
   distance?: number;
   salaryAmount: string;

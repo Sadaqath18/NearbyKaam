@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Job, WorkerProfile } from "../types";
-import { CATEGORIES, LANGUAGES } from "../constants";
+import { CATEGORIES, LANGUAGES } from "../appConstants";
 import {
   speakText,
   stopSpeaking,
@@ -166,7 +166,8 @@ const JobCard: React.FC<JobCardProps> = ({
   return (
     <div
       onClick={() => setIsExpanded(!isExpanded)}
-      className={`bg-white rounded-[32px] border transition-all duration-300 cursor-pointer overflow-hidden relative ${isExpanded ? "border-indigo-600 shadow-xl" : "border-slate-100 shadow-sm active:scale-[0.98]"}`}
+      className={`bg-white rounded-[32px] border transition-all duration-300 cursor-pointer overflow-y-auto
+ relative ${isExpanded ? "border-indigo-600 shadow-xl" : "border-slate-100 shadow-sm active:scale-[0.98]"}`}
     >
       {isPromotionActive(job) && (
         <span className="absolute top-3 right-3 bg-yellow-400 text-black text-[9px] font-black px-3 py-1 rounded-full uppercase">
@@ -302,7 +303,8 @@ const JobCard: React.FC<JobCardProps> = ({
 
         {/* EXPANDED CONTENT */}
         <div
-          className={`overflow-hidden transition-all duration-500 ${isExpanded ? "max-h-[800px] mt-6 opacity-100" : "max-h-0 opacity-0"}`}
+          className={`overflow-y-auto
+ transition-all duration-500 ${isExpanded ? "max-h-[800px] mt-6 opacity-100" : "max-h-0 opacity-0"}`}
         >
           <div className="space-y-6 pt-6 border-t border-slate-100">
             <div>

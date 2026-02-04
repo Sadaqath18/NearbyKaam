@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { WorkerProfile, JobCategory, Location, WorkerResume } from "../types";
-import { CATEGORIES } from "../constants";
+import { CATEGORIES } from "../appConstants";
 
 interface WorkerProfileDrawerProps {
   isOpen: boolean;
@@ -236,7 +236,10 @@ const WorkerProfileDrawer: React.FC<WorkerProfileDrawerProps> = ({
               {isPreviouslyCompleted ? "Update Profile" : "Worker Profile"}
             </h2>
             <div className="flex items-center gap-2 mt-1">
-              <div className="w-24 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+              <div
+                className="w-24 h-1.5 bg-gray-100 rounded-full overflow-y-auto
+"
+              >
                 <div
                   className="h-full bg-orange-500 transition-all duration-500"
                   style={{ width: `${progressPercent}%` }}

@@ -8,7 +8,7 @@ import {
   WorkerProfile,
   User,
 } from "../types";
-import { CATEGORIES } from "../constants";
+import { CATEGORIES } from "../appConstants";
 import { EmployerProfile } from "../types";
 import { createEmptyEmployerProfile } from "../utils/employerProfile";
 import EmployerProfileDrawer from "../components/EmployerProfileDrawer";
@@ -21,6 +21,7 @@ import EmployerJobDetail from "../components/EmployerJobDetail";
 import EmployerPromoteView from "../components/EmployerPromoteView";
 import PromoteJobView from "./PromoteJobView";
 import { getPromotionPlans } from "../services/promotionPlanService";
+import { MOCK_WORKERS } from "../constants/mockWorkers";
 
 interface EmployerViewProps {
   onJobSubmit: (job: Job) => void;
@@ -31,25 +32,6 @@ interface EmployerViewProps {
 
   onUpdateJob: (jobId: string, updates: Partial<Job>) => Promise<void>;
 }
-
-const MOCK_APPLICANTS: WorkerProfile[] = [
-  {
-    name: "Rajesh Kumar",
-    phone: "9876543221",
-    jobType: JobCategory.HOSPITALITY,
-    preferredJobTitle: "Assistant Cook",
-    expectedSalary: 18000,
-    location: { lat: 19.076, lng: 72.8777, address: "Andheri West" },
-    resume: {
-      hasAudio: true,
-      audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
-      hasDocument: true,
-      documentName: "Rajesh_Resume.pdf",
-      documentUrl: "#",
-    },
-    createdAt: new Date().toISOString(),
-  },
-];
 
 function addDays(date: Date, days: number) {
   const d = new Date(date);
@@ -95,6 +77,8 @@ const EmployerView: React.FC<EmployerViewProps> = ({
     }
   }, [currentUser?.phone]);
 
+  console.log("Jobs received from App:", allJobs.length);
+
   const [isReviewing, setIsReviewing] = useState(false);
   const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
   const [isPosting, setIsPosting] = useState(false);
@@ -139,7 +123,9 @@ const EmployerView: React.FC<EmployerViewProps> = ({
   const promotionPlans = getPromotionPlans().filter((p) => p.isActive);
 
   const myJobs = allJobs.filter(
-    (j) => j.employerId === "me" || j.contact.callNumber === currentUser?.phone,
+    (j) =>
+      j.employerId === currentUser?.phone ||
+      j.contact.callNumber === currentUser?.phone,
   );
 
   const handleAudioToggle = async (url: string, id: string) => {
@@ -325,7 +311,7 @@ const EmployerView: React.FC<EmployerViewProps> = ({
     : [];
 
   // Workers shown in Workers tab
-  const matchingWorkers = MOCK_APPLICANTS.filter((worker) =>
+  const matchingWorkers = MOCK_WORKERS.filter((worker) =>
     employerJobCategories.includes(worker.jobType),
   );
 
@@ -730,7 +716,8 @@ const EmployerView: React.FC<EmployerViewProps> = ({
               </label>
               <div
                 onClick={() => fileInputRef.current?.click()}
-                className={`aspect-video w-full rounded-2xl border-4 border-dashed flex flex-col items-center justify-center transition-all cursor-pointer overflow-hidden ${postData.shopPhoto ? "border-emerald-500 bg-emerald-50" : "border-slate-400 bg-slate-50 hover:border-indigo-400"}`}
+                className={`aspect-video w-full rounded-2xl border-4 border-dashed flex flex-col items-center justify-center transition-all cursor-pointer overflow-y-auto
+ ${postData.shopPhoto ? "border-emerald-500 bg-emerald-50" : "border-slate-400 bg-slate-50 hover:border-indigo-400"}`}
               >
                 {postData.shopPhoto ? (
                   <img
@@ -815,7 +802,10 @@ const EmployerView: React.FC<EmployerViewProps> = ({
 
       {isReviewing && (
         <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-md flex items-end sm:items-center justify-center p-4">
-          <div className="bg-white w-full max-w-md rounded-[40px] flex flex-col max-h-[90vh] overflow-hidden shadow-2xl">
+          <div
+            className="bg-white w-full max-w-md rounded-[40px] flex flex-col max-h-[90vh] overflow-y-auto
+ shadow-2xl"
+          >
             <div className="p-6 border-b-2 border-slate-200 bg-slate-50 flex justify-between items-center">
               <h2 className="text-xl font-black text-slate-900">Job Preview</h2>
               <button
@@ -929,7 +919,10 @@ const EmployerView: React.FC<EmployerViewProps> = ({
   );
 
   return (
-    <div className="flex-1 h-full flex flex-col bg-slate-50 overflow-hidden relative">
+    <div
+      className="flex-1 h-full flex flex-col bg-slate-50 overflow-y-auto
+ relative"
+    >
       {view === "HOME" && renderHome()}
       {view === "POST_JOB" && renderPostJob()}
       {view === "SUCCESS" && renderSuccess()}
@@ -941,7 +934,11 @@ const EmployerView: React.FC<EmployerViewProps> = ({
       )}
 
       {view === "MATCHING_WORKERS" && (
-        <MatchingWorkersView workers={matchingWorkers} />
+        <MatchingWorkersView
+          workers={matchingWorkers}
+          onAudioToggle={handleAudioToggle}
+          playingAudioId={playingAudioId}
+        />
       )}
 
       {view === "JOB_DETAIL" && selectedJob && (

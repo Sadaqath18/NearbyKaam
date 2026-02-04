@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { Job, JobCategory, SalaryType } from "../../types";
-import { CATEGORIES } from "../../constants";
+import { CATEGORIES } from "../../appConstants";
 import { EMPLOYER_INDUSTRIES } from "../../constants/employerIndustries";
 
 interface EmployerLite {

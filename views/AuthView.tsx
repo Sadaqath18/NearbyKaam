@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { UserRole } from "../types";
-import { ADMIN_WHITELIST } from "../constants";
+import { ADMIN_WHITELIST } from "../appConstants";
 import { speakText } from "../services/geminiService";
 import STRINGS from "../i18n/strings";
 import AUTH_STRINGS from "../i18n/auth";

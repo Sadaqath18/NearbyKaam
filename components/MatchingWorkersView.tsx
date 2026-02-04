@@ -1,13 +1,19 @@
 import React from "react";
 import { WorkerProfile } from "../types";
-import { CATEGORIES } from "../constants";
+import { CATEGORIES } from "../appConstants";
 
 interface Props {
   workers: WorkerProfile[];
   onSelectWorker?: (w: WorkerProfile) => void;
+  onAudioToggle: (url: string, id: string) => void;
+  playingAudioId: string | null;
 }
 
-const MatchingWorkersView: React.FC<Props> = ({ workers }) => {
+const MatchingWorkersView: React.FC<Props> = ({
+  workers,
+  onAudioToggle,
+  playingAudioId,
+}) => {
   // ✅ Proper empty state (early return)
   if (!workers || workers.length === 0) {
     return (
@@ -64,12 +70,32 @@ const MatchingWorkersView: React.FC<Props> = ({ workers }) => {
               </div>
             </div>
 
-            <a
-              href={`tel:${worker.phone}`}
-              className="px-4 py-2 bg-emerald-500 text-white text-[9px] font-black rounded-full uppercase active:scale-95 transition"
-            >
-              Call
-            </a>
+            <div className="flex items-center gap-2">
+              {/* CALL */}
+              <a
+                href={`tel:${worker.phone}`}
+                className="px-4 py-2 bg-emerald-500 text-white text-[9px] font-black rounded-full uppercase active:scale-95 transition"
+              >
+                Call
+              </a>
+
+              {/* AUDIO RESUME */}
+              {worker.resume?.hasAudio && worker.resume.audioUrl && (
+                <button
+                  onClick={() =>
+                    onAudioToggle(worker.resume.audioUrl!, worker.phone)
+                  }
+                  className="w-9 h-9 bg-indigo-600 text-white rounded-full flex items-center justify-center active:scale-95"
+                  title="Play audio resume"
+                >
+                  <i
+                    className={`fa-solid ${
+                      playingAudioId === worker.phone ? "fa-stop" : "fa-play"
+                    }`}
+                  ></i>
+                </button>
+              )}
+            </div>
           </div>
         );
       })}

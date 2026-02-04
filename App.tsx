@@ -8,7 +8,9 @@ import LanguageSelectionView from "./views/LanguageSelectionView";
 import AuthView from "./views/AuthView";
 import EmployerProfileDrawer from "./components/EmployerProfileDrawer";
 
-import { MOCK_JOBS, LANGUAGES } from "./constants";
+import { LANGUAGES } from "./appConstants";
+import { MOCK_JOBS } from "./constants/mockJobs";
+
 import { stopSpeaking, speakText } from "./services/geminiService";
 import { GoogleGenAI } from "@google/genai";
 import { LanguageCode, useLanguage } from "./context/LanguageContext";
@@ -22,33 +24,45 @@ const App: React.FC = () => {
 
   /* ---------------- Jobs ---------------- */
   const [jobs, setJobs] = useState<Job[]>(() => {
-    const saved = localStorage.getItem("nearbykaam_jobs_v3");
-    return saved ? JSON.parse(saved) : MOCK_JOBS;
+    try {
+      const saved = localStorage.getItem("nearbykaam_jobs_v3");
+      if (!saved) return MOCK_JOBS;
+
+      const parsed = JSON.parse(saved);
+      return parsed.length ? parsed : MOCK_JOBS;
+    } catch {
+      return MOCK_JOBS;
+    }
   });
+
   //  Auto-expire promoted jobs
   useEffect(() => {
-    setJobs((prev) => {
-      const now = new Date();
+    const interval = setInterval(() => {
+      setJobs((prev) => {
+        const now = new Date();
 
-      const updated = prev.map((job) => {
-        if (
-          job.isPromoted &&
-          job.promotionExpiresAt &&
-          new Date(job.promotionExpiresAt) <= now
-        ) {
-          return {
-            ...job,
-            isPromoted: false,
-            promotionRadiusKm: undefined,
-            promotionExpiresAt: undefined,
-          };
-        }
-        return job;
+        const updated = prev.map((job) => {
+          if (
+            job.isPromoted &&
+            job.promotionExpiresAt &&
+            new Date(job.promotionExpiresAt) <= now
+          ) {
+            return {
+              ...job,
+              isPromoted: false,
+              promotionRadiusKm: undefined,
+              promotionExpiresAt: undefined,
+            };
+          }
+          return job;
+        });
+
+        localStorage.setItem("nearbykaam_jobs_v3", JSON.stringify(updated));
+        return updated;
       });
+    }, 60000); // every 1 min
 
-      localStorage.setItem("nearbykaam_jobs_v3", JSON.stringify(updated));
-      return updated;
-    });
+    return () => clearInterval(interval);
   }, []);
 
   /* ---------------- Language (GLOBAL) ---------------- */
@@ -261,7 +275,10 @@ const App: React.FC = () => {
       case UserRole.WORKER:
         return (
           <div className="w-full min-h-screen flex justify-center bg-slate-100">
-            <div className="relative w-full max-w-md min-h-screen bg-white overflow-hidden">
+            <div
+              className="relative w-full max-w-md min-h-screen bg-white overflow-y-auto
+"
+            >
               <WorkerView
                 jobs={jobs}
                 onReport={async (id) => {
@@ -361,8 +378,10 @@ const App: React.FC = () => {
 
   /* ---------------- App shell ---------------- */
   return (
-    <div className="max-w-md mx-auto h-screen bg-slate-50 flex flex-col relative shadow-2xl overflow-hidden border-x border-slate-200">
-      <div className="flex-1 overflow-hidden">{renderContent()}</div>
+    <div className="w-full min-h-screen bg-slate-50 flex justify-center">
+      <div className="w-full md:max-w-md md:shadow-2xl md:border-x md:border-slate-200 flex flex-col">
+        <div className="flex-1 overflow-y-auto">{renderContent()}</div>
+      </div>
     </div>
   );
 };

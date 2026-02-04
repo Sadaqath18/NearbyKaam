@@ -47,7 +47,10 @@ const PromoteJobView: React.FC<Props> = ({ job, plans, onBack, onBuy }) => {
   };
 
   return (
-    <div className="flex-1 flex flex-col bg-slate-50 overflow-hidden">
+    <div
+      className="flex-1 flex flex-col bg-slate-50 overflow-y-auto
+"
+    >
       {/* HEADER */}
       <div className="px-6 pt-12 pb-6 bg-white border-b-2 border-slate-200 flex items-center gap-4">
         <button

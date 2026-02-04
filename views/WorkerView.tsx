@@ -3,7 +3,7 @@ import { Job, JobCategory, Location, WorkerProfile, User } from "../types";
 import CategoryGrid from "../components/CategoryGrid";
 import JobCard from "../components/JobCard";
 import WorkerProfileDrawer from "../components/WorkerProfileDrawer";
-import { STATES_AND_CITIES, LANGUAGES } from "../constants";
+import { STATES_AND_CITIES, LANGUAGES } from "../appConstants";
 import { GoogleGenAI } from "@google/genai";
 import { parseJobSearch, speakText } from "../services/geminiService";
 import { JOB_CATEGORY_LABELS } from "../i18n/jobCategories";
@@ -190,6 +190,14 @@ const WorkerView: React.FC<WorkerViewProps> = ({
     }
   }, []);
 
+  useEffect(() => {
+    if (profile.jobType) {
+      setSelectedCategory(profile.jobType);
+      setViewState("JOB_FEED");
+      setActiveTab("JOBS");
+    }
+  }, [profile.jobType]);
+
   const LANG_TO_LOCALE: Record<string, string> = {
     en: "en-IN",
     hi: "hi-IN",
@@ -282,6 +290,7 @@ const WorkerView: React.FC<WorkerViewProps> = ({
   {
     /*JOB FILTERS*/
   }
+  console.log("allJobs:", allJobs);
 
   const processedJobs = useMemo(() => {
     let list = (allJobs || []).filter(
@@ -347,6 +356,11 @@ const WorkerView: React.FC<WorkerViewProps> = ({
     maxDistance,
     selectedExperience,
   ]);
+  console.log(
+    "categories:",
+    allJobs.map((j) => j.category),
+  );
+  console.log("selectedCategory:", selectedCategory);
 
   const promotedJobsNearby = useMemo(() => {
     if (!userLocation) return [];
@@ -438,6 +452,7 @@ const WorkerView: React.FC<WorkerViewProps> = ({
 
     recognition.start();
   };
+  console.log("processed jobs:", processedJobs.length);
 
   const handleManualLocationSelect = async (city: string) => {
     try {
@@ -496,7 +511,10 @@ const WorkerView: React.FC<WorkerViewProps> = ({
   }, [hasSkippedProfile]);
 
   return (
-    <div className="relative max-w-md mx-auto flex flex-col h-full bg-white overflow-hidden">
+    <div
+      className="relative max-w-md mx-auto flex flex-col h-full bg-white overflow-y-auto
+"
+    >
       {/* PROFILE DRAWER */}
       <WorkerProfileDrawer
         isOpen={isProfileOpen}
@@ -509,7 +527,7 @@ const WorkerView: React.FC<WorkerViewProps> = ({
       />
 
       {/*MAIN CONTENT */}
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 overflow-y-auto">
         {viewState === "INDUSTRY_SELECT" ? (
           /* CATEGORY SELECTION VIEW */
           <div className="flex-1 flex flex-col h-full bg-slate-50">
