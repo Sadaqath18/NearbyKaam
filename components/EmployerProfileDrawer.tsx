@@ -30,7 +30,7 @@ const EmployerProfileDrawer: React.FC<EmployerProfileDrawerProps> = ({
 
       setErrors({});
     }
-  }, [profile, isOpen]);
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -75,6 +75,7 @@ const EmployerProfileDrawer: React.FC<EmployerProfileDrawerProps> = ({
     setErrors({});
     if (step < totalSteps) setStep(step + 1);
     else onSave(localProfile);
+    onClose();
   };
   {
     errors.firstName && (
