@@ -378,8 +378,8 @@ const App: React.FC = () => {
 
   /* ---------------- App shell ---------------- */
   return (
-    <div className="w-full min-h-screen bg-slate-50 flex justify-center">
-      <div className="w-full md:max-w-md md:shadow-2xl md:border-x md:border-slate-200 flex flex-col">
+    <div className="w-full min-h-screen bg-slate-50">
+      <div className="w-full md:max-w-md md:mx-auto md:shadow-2xl md:border-x md:border-slate-200 flex flex-col min-h-screen">
         <div className="flex-1 overflow-y-auto">{renderContent()}</div>
       </div>
     </div>
