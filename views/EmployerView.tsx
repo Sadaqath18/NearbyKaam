@@ -31,6 +31,7 @@ interface EmployerViewProps {
   onLogout: () => void;
 
   onUpdateJob: (jobId: string, updates: Partial<Job>) => Promise<void>;
+  onDeleteJob: (jobId: string) => void;
 }
 
 function addDays(date: Date, days: number) {
@@ -46,6 +47,7 @@ const EmployerView: React.FC<EmployerViewProps> = ({
   onChangeLanguage,
   onLogout,
   onUpdateJob,
+  onDeleteJob,
 }) => {
   const [employerProfile, setEmployerProfile] =
     useState<EmployerProfile | null>(null);
@@ -94,7 +96,10 @@ const EmployerView: React.FC<EmployerViewProps> = ({
     whatsappNumber: currentUser?.phone || "",
     sameAsWhatsApp: true,
     salaryAmount: "",
-    salaryType: "DAY" as SalaryType,
+    salaryType: undefined as SalaryType | undefined,
+
+    minExperienceYears: 0,
+
     location: null as Location | null,
     shopPhoto: null as ShopPhoto | null,
   });
@@ -164,10 +169,15 @@ const EmployerView: React.FC<EmployerViewProps> = ({
     if (!postData.shopName.trim()) e.shopName = "Business name required";
     if (!postData.jobRole.trim()) e.jobRole = "Job title required";
     if (!postData.category) e.category = "Category required";
+
     if (!postData.salaryAmount || isNaN(Number(postData.salaryAmount)))
       e.salary = "Valid amount required";
+
+    if (!postData.salaryType) e.salaryType = "Select salary type";
+
     if (!postData.location?.address || postData.location?.address.trim() === "")
       e.location = "Location required";
+
     if (!/^[6-9]\d{9}$/.test(postData.callNumber))
       e.callNumber = "Valid 10-digit number required";
     if (
@@ -236,13 +246,13 @@ const EmployerView: React.FC<EmployerViewProps> = ({
       }
 
       onJobSubmit({
-        id: Math.random().toString(36).substr(2, 9),
+        id: crypto.randomUUID(),
         title: postData.jobRole,
         jobRole: postData.jobRole,
         category: postData.category,
         industry: employerProfile.industry!,
         employerFirstName: postData.firstName,
-        employerId: "me",
+        employerId: currentUser?.phone!,
         employerName: postData.shopName,
         shopName: postData.shopName,
         description: postData.description,
@@ -256,13 +266,19 @@ const EmployerView: React.FC<EmployerViewProps> = ({
         location: postData.location!,
         salaryAmount: postData.salaryAmount,
         salaryType: postData.salaryType,
+        minExperienceYears: postData.minExperienceYears,
         isVerified: false,
         isPromoted: false,
         status: "PENDING_APPROVAL", // admin must approve before job goes live
         isLive: false, // becomes true only after approval
 
+        approvedAt: undefined,
+        approvedBy: undefined,
+        promotion: undefined,
+
         callCount: 0,
         whatsappCount: 0,
+
         createdAt: new Date().toISOString(),
         expiryDays: 15,
       });
@@ -676,6 +692,29 @@ const EmployerView: React.FC<EmployerViewProps> = ({
                 </p>
               )}
             </div>
+
+            {/* Required Experience */}
+            <div>
+              <label className="block text-[9px] font-black text-slate-500 uppercase mb-2">
+                Required Experience
+              </label>
+
+              <select
+                title="Experience level"
+                value={postData.minExperienceYears ?? 0}
+                onChange={(e) =>
+                  setPostData({
+                    ...postData,
+                    minExperienceYears: Number(e.target.value),
+                  })
+                }
+                className="w-full border rounded-xl p-3 font-bold"
+              >
+                <option value={0}>Entry level OK</option>
+                <option value={1}>1–2 years</option>
+                <option value={3}>3+ years</option>
+              </select>
+            </div>
           </div>
         </section>
 
@@ -942,7 +981,34 @@ const EmployerView: React.FC<EmployerViewProps> = ({
       )}
 
       {view === "JOB_DETAIL" && selectedJob && (
-        <EmployerJobDetail job={selectedJob} onBack={() => setView("HOME")} />
+        <EmployerJobDetail
+          job={selectedJob}
+          onBack={() => setView("HOME")}
+          onDeleteJob={async (id) => {
+            await onDeleteJob(id);
+            setView("HOME");
+          }}
+          onEdit={(job) => {
+            setPostData({
+              firstName: job.employerFirstName || "",
+              shopName: job.shopName || "",
+              jobRole: job.jobRole || "",
+              category: job.category,
+              description: job.description || "",
+              callNumber: job.contact.callNumber,
+              whatsappNumber: job.contact.whatsappNumber,
+              sameAsWhatsApp: true,
+              salaryAmount: job.salaryAmount,
+              salaryType: job.salaryType,
+              minExperienceYears: job.minExperienceYears || 0,
+              location: job.location,
+              shopPhoto: job.shopPhoto,
+            });
+
+            setSelectedJob(job); // store editing target
+            setView("POST_JOB"); // reuse same form
+          }}
+        />
       )}
 
       {view === "PROMOTE" && (

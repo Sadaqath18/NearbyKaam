@@ -6,13 +6,11 @@ import {
   LogEntry,
   AdminPermission,
   JobCategory,
-  SalaryType,
-  Location,
   WorkerProfile,
   EmployerProfile,
   UserRole,
 } from "../types";
-import { CATEGORIES, STATES_AND_CITIES, MOCK_JOBS } from "../appConstants";
+import { CATEGORIES } from "../appConstants";
 import CreateEmployerModal from "../components/admin/CreateEmployerModal";
 import CreateJobModal from "../components/admin/CreateJobModal";
 import CreateWorkerModal from "../components/admin/CreateWorkerModal";
@@ -56,14 +54,13 @@ const AdminView: React.FC<AdminViewProps> = ({
   const [activeModule, setActiveModule] = useState<AdminModule>("OVERVIEW");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
-  const [selectedWorker, setSelectedWorker] = useState<WorkerProfile | null>(
-    null,
-  );
 
   const [selectedEmployer, setSelectedEmployer] = useState<any | null>(null);
   const [showCreateModal, setShowCreateModal] = useState<
     "SELECT" | "JOB" | "EMPLOYER" | "WORKER" | "ADMIN" | null
   >(null);
+
+  const [statusFilter, setStatusFilter] = useState<JobStatus | "ALL">("ALL");
 
   const [managedAdmins, setManagedAdmins] = useState<User[]>(() => {
     const saved = localStorage.getItem("nearbykaam_managed_admins");
@@ -86,8 +83,16 @@ const AdminView: React.FC<AdminViewProps> = ({
   });
 
   const registeredWorkers = useMemo(() => {
-    const saved = localStorage.getItem("nearbykaam_worker_profile");
-    return saved ? [JSON.parse(saved) as WorkerProfile] : [];
+    const workers: WorkerProfile[] = [];
+
+    Object.keys(localStorage).forEach((key) => {
+      if (key.startsWith("nearbykaam_worker_profile_")) {
+        const data = localStorage.getItem(key);
+        if (data) workers.push(JSON.parse(data));
+      }
+    });
+
+    return workers;
   }, [activeModule]);
 
   const defaultFilters = {
@@ -125,11 +130,77 @@ const AdminView: React.FC<AdminViewProps> = ({
     return Array.from(map.values());
   }, [jobs]);
 
-  const filteredJobs = useMemo(() => {
+  const baseFilteredJobs = useMemo(() => {
     return jobs.filter((job) => {
       if (filters.onlyLive && !job.isLive) return false;
-      if (filters.state && job.location.state !== filters.state) return false;
-      if (filters.city && job.location.city !== filters.city) return false;
+
+      if (filters.state && job.location?.state !== filters.state) return false;
+      if (filters.city && job.location?.city !== filters.city) return false;
+      if (filters.category && job.category !== filters.category) return false;
+
+      if (filters.search) {
+        const s = filters.search.toLowerCase();
+        if (
+          !(job.jobRole || job.title).toLowerCase().includes(s) &&
+          !job.employerName.toLowerCase().includes(s)
+        )
+          return false;
+      }
+
+      return true;
+    });
+  }, [jobs, filters]);
+
+  const statusCounts = useMemo(() => {
+    return {
+      ALL: baseFilteredJobs.length,
+      APPROVED: baseFilteredJobs.filter((j) => j.status === "APPROVED").length,
+      PENDING_APPROVAL: baseFilteredJobs.filter(
+        (j) => j.status === "PENDING_APPROVAL",
+      ).length,
+      REJECTED: baseFilteredJobs.filter((j) => j.status === "REJECTED").length,
+    };
+  }, [baseFilteredJobs]);
+
+  const states = useMemo(() => {
+    return [
+      ...new Set(jobs.map((j) => j.location?.state).filter(Boolean)),
+    ].sort();
+  }, [jobs]);
+
+  const cities = useMemo(() => {
+    if (!filters.state) return [];
+
+    return [
+      ...new Set(
+        jobs
+          .filter((j) => j.location?.state === filters.state)
+          .map((j) => j.location?.city)
+          .filter(Boolean),
+      ),
+    ].sort();
+  }, [jobs, filters.state]);
+
+  const filteredJobs = useMemo(() => {
+    return jobs.filter((job) => {
+      // 🔥 ADD THIS (status chips filter)
+      if (statusFilter !== "ALL" && job.status !== statusFilter) return false;
+
+      if (filters.onlyLive && !job.isLive) return false;
+      if (
+        filters.state &&
+        job.location?.state?.trim().toLowerCase() !==
+          filters.state.trim().toLowerCase()
+      )
+        return false;
+
+      if (
+        filters.city &&
+        (job.location?.city || "").trim().toLowerCase() !==
+          filters.city.trim().toLowerCase()
+      )
+        return false;
+
       if (filters.status && job.status !== filters.status) return false;
       if (filters.category && job.category !== filters.category) return false;
       if (filters.reported === "YES" && !job.isReported) return false;
@@ -139,6 +210,7 @@ const AdminView: React.FC<AdminViewProps> = ({
         const now = new Date();
         const diffDays =
           (now.getTime() - jobDate.getTime()) / (1000 * 3600 * 24);
+
         if (filters.dateRange === "TODAY" && diffDays > 1) return false;
         if (filters.dateRange === "WEEK" && diffDays > 7) return false;
         if (filters.dateRange === "MONTH" && diffDays > 30) return false;
@@ -152,9 +224,10 @@ const AdminView: React.FC<AdminViewProps> = ({
           job.shopName?.toLowerCase().includes(s)
         );
       }
+
       return true;
     });
-  }, [jobs, filters]);
+  }, [jobs, filters, statusFilter]);
 
   const stats = useMemo(() => {
     const live = jobs.filter((j) => j.status === "APPROVED" && j.isLive).length;
@@ -265,7 +338,7 @@ const AdminView: React.FC<AdminViewProps> = ({
             }
           >
             <option value="">All States</option>
-            {Object.keys(STATES_AND_CITIES).map((s) => (
+            {states.map((s) => (
               <option key={s} value={s}>
                 {s}
               </option>
@@ -282,15 +355,13 @@ const AdminView: React.FC<AdminViewProps> = ({
             className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold outline-none focus:border-indigo-600"
             value={filters.city}
             onChange={(e) => setFilters({ ...filters, city: e.target.value })}
-            disabled={!filters.state}
           >
             <option value="">All Cities</option>
-            {filters.state &&
-              STATES_AND_CITIES[filters.state].map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
+            {cities.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
           </select>
         </div>
       </div>
@@ -668,7 +739,9 @@ const AdminView: React.FC<AdminViewProps> = ({
                 {[
                   {
                     label: "Experience",
-                    val: selectedJob.experienceLevel || "Entry Level",
+                    val:
+                      selectedJob.minExperienceYears + " years" ||
+                      "Entry Level",
                   },
                   {
                     label: "Work Mode",
@@ -846,10 +919,7 @@ const AdminView: React.FC<AdminViewProps> = ({
   );
 
   return (
-    <div
-      className="bg-slate-50 h-full flex flex-col overflow-y-auto
- safe-area-bottom"
-    >
+    <div className="bg-slate-50 flex flex-col min-h-screen overflow-hidden safe-area-bottom">
       {renderAdminHeader()}
       {isFilterOpen && renderFilterPanel()}
       {renderJobAuditModal()}
@@ -911,30 +981,56 @@ const AdminView: React.FC<AdminViewProps> = ({
 
         {activeModule === "JOBS" && (
           <div className="flex flex-col h-full animate-in fade-in duration-300">
-            <div className="p-6 bg-white border-b border-slate-100 flex items-center gap-3">
-              <div className="flex-1 bg-slate-50 p-1 rounded-2xl flex items-center border border-slate-100">
-                <i className="fa-solid fa-magnifying-glass ml-4 text-slate-400"></i>
-                <input
-                  type="text"
-                  placeholder="Search globally..."
-                  className="bg-transparent flex-1 px-3 py-3 text-sm font-bold outline-none"
-                  value={filters.search}
-                  onChange={(e) =>
-                    setFilters({ ...filters, search: e.target.value })
-                  }
-                />
+            <div className="p-6 bg-white border-b border-slate-100 space-y-4">
+              {/* Row 1 — search + filter */}
+              <div className="flex items-center gap-3">
+                <div className="flex-1 bg-slate-50 p-1 rounded-2xl flex items-center border border-slate-100">
+                  <i className="fa-solid fa-magnifying-glass ml-4 text-slate-400"></i>
+                  <input
+                    type="text"
+                    placeholder="Search globally..."
+                    className="bg-transparent flex-1 px-3 py-3 text-sm font-bold outline-none"
+                    value={filters.search}
+                    onChange={(e) =>
+                      setFilters({ ...filters, search: e.target.value })
+                    }
+                  />
+                </div>
+
+                <button
+                  title="filters"
+                  onClick={() => setIsFilterOpen(!isFilterOpen)}
+                  className={`w-12 h-12 rounded-2xl flex items-center justify-center ${
+                    isFilterOpen
+                      ? "bg-indigo-600 text-white"
+                      : "bg-white border border-slate-200 text-slate-500"
+                  }`}
+                >
+                  <i className="fa-solid fa-sliders"></i>
+                </button>
               </div>
-              <button
-                aria-label="Toggle Filters"
-                onClick={() => setIsFilterOpen(!isFilterOpen)}
-                className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all shadow-sm ${
-                  isFilterOpen
-                    ? "bg-indigo-600 text-white shadow-indigo-100"
-                    : "bg-white border border-slate-200 text-slate-500"
-                }`}
-              >
-                <i className="fa-solid fa-sliders"></i>
-              </button>
+
+              {/* Row 2 — status chips */}
+              <div className="flex gap-2 flex-wrap">
+                {["ALL", "APPROVED", "PENDING_APPROVAL", "REJECTED"].map(
+                  (s) => (
+                    <button
+                      key={s}
+                      onClick={() => setStatusFilter(s as any)}
+                      className={`px-4 py-2 rounded-xl text-xs font-black ${
+                        statusFilter === s
+                          ? "bg-indigo-600 text-white"
+                          : "bg-slate-100 text-slate-500"
+                      }`}
+                    >
+                      {s === "PENDING_APPROVAL" ? "IN QUEUE" : s}
+                      {" ("}
+                      {statusCounts[s as keyof typeof statusCounts]}
+                      {")"}
+                    </button>
+                  ),
+                )}
+              </div>
             </div>
 
             <div className="flex-1 overflow-y-auto p-6 space-y-4 no-scrollbar pb-24">

@@ -22,9 +22,10 @@ const getEmptyWorkerProfile = (phone: string): WorkerProfile => ({
   name: "",
   email: "",
   preferredJobTitle: "",
-  jobType: undefined as unknown as JobCategory,
+  jobType: undefined,
   expectedSalary: undefined,
   expectedSalaryType: undefined,
+  experienceYears: undefined,
   location: undefined,
   createdAt: new Date().toISOString(), // ✅ REQUIRED FIELD
   resume: {
@@ -205,6 +206,8 @@ const WorkerProfileDrawer: React.FC<WorkerProfileDrawerProps> = ({
     } else if (step === 2) {
       if (!localProfile.expectedSalary)
         currentErrors.push("Monthly Salary is required");
+      if (!localProfile.experienceYears === undefined)
+        currentErrors.push("Select experience level");
     }
     setErrors(currentErrors);
     return currentErrors.length === 0;
@@ -347,7 +350,7 @@ const WorkerProfileDrawer: React.FC<WorkerProfileDrawerProps> = ({
                   <select
                     title="Choose your primary work industry"
                     className="w-full bg-gray-50 border-0 rounded-2xl p-4 font-bold text-gray-800 appearance-none focus:ring-2 focus:ring-orange-500 cursor-pointer"
-                    value={localProfile.jobType}
+                    value={localProfile.jobType || ""}
                     onChange={(e) =>
                       setLocalProfile({
                         ...localProfile,
@@ -433,6 +436,37 @@ const WorkerProfileDrawer: React.FC<WorkerProfileDrawerProps> = ({
                     {type}
                   </button>
                 ))}
+              </div>
+
+              {/* Experience */}
+              <div>
+                <label className="block text-[10px] font-black text-gray-400 uppercase mb-2">
+                  Experience
+                </label>
+
+                <select
+                  title="Experience level"
+                  value={localProfile.experienceYears ?? ""}
+                  onChange={(e) =>
+                    setLocalProfile({
+                      ...localProfile,
+                      experienceYears:
+                        e.target.value === ""
+                          ? undefined
+                          : Number(e.target.value),
+                    })
+                  }
+                  className="w-full bg-gray-50 rounded-xl p-3 font-bold"
+                >
+                  <option value="" disabled>
+                    Select your experience level
+                  </option>
+
+                  <option value={0}>Entry level</option>
+                  <option value={1}>1 year</option>
+                  <option value={2}>2 years</option>
+                  <option value={3}>3+ years</option>
+                </select>
               </div>
             </div>
           )}

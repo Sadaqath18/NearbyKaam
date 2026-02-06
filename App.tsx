@@ -169,9 +169,25 @@ const App: React.FC = () => {
   };
 
   const onUpdateJob = async (jobId: string, updates: Partial<Job>) => {
-    updateJobsAtomic((prev) =>
-      prev.map((job) => (job.id === jobId ? { ...job, ...updates } : job)),
+    setJobs((prev) =>
+      prev.map((j) =>
+        j.id === jobId
+          ? {
+              ...j,
+              ...updates,
+              // FORCE re-approval on ANY edit
+              status: "PENDING_APPROVAL", // 🔥 important
+              isLive: false, // 🔥 hide from workers
+              approvedAt: undefined,
+              approvedBy: undefined,
+            }
+          : j,
+      ),
     );
+  };
+
+  const handleDeleteJob = async (jobId: string) => {
+    updateJobsAtomic((prev) => prev.filter((job) => job.id !== jobId));
   };
 
   /* ---------------- Auth ---------------- */
@@ -233,6 +249,10 @@ const App: React.FC = () => {
     stopSpeaking();
   };
 
+  const onDeleteJob = async (jobId: string) => {
+    setJobs((prev) => prev.filter((j) => j.id !== jobId));
+  };
+
   const handleProfileCompleted = () => {
     if (!currentUser) return;
     const updated = { ...currentUser, profileCompleted: true };
@@ -276,7 +296,7 @@ const App: React.FC = () => {
         return (
           <div className="w-full min-h-screen flex justify-center bg-slate-100">
             <div
-              className="relative w-full max-w-md min-h-screen bg-white overflow-y-auto
+              className="relative w-full mx-auto min-h-screen bg-white overflow-y-auto
 "
             >
               <WorkerView
@@ -292,7 +312,10 @@ const App: React.FC = () => {
                 isGuest={isGuest}
                 currentUser={currentUser}
                 onProfileCompleted={handleProfileCompleted}
-                onAuthRequired={() => setShowAuthModal(true)}
+                onAuthRequired={() => {
+                  setCurrentUser(null);
+                  setIsGuest(false);
+                }}
                 onLogout={handleLogout}
                 isProfileOpen={isProfileOpen}
                 setIsProfileOpen={setIsProfileOpen}
@@ -324,6 +347,7 @@ const App: React.FC = () => {
             <EmployerView
               onJobSubmit={(job) => updateJobsAtomic((prev) => [...prev, job])}
               onUpdateJob={onUpdateJob}
+              onDeleteJob={handleDeleteJob}
               allJobs={jobs}
               onChangeLanguage={() => setIsChangingLanguage(true)}
               currentUser={currentUser}
@@ -365,7 +389,7 @@ const App: React.FC = () => {
   /* ---------------- Language screen ---------------- */
   if (!language || isChangingLanguage) {
     return (
-      <div className="max-w-md mx-auto h-screen bg-white">
+      <div className="w-full h-screen bg-white">
         <LanguageSelectionView
           onSelect={changeLanguage}
           onBack={
@@ -378,10 +402,8 @@ const App: React.FC = () => {
 
   /* ---------------- App shell ---------------- */
   return (
-    <div className="w-full min-h-screen bg-slate-50">
-      <div className="w-full md:max-w-md md:mx-auto md:shadow-2xl md:border-x md:border-slate-200 flex flex-col min-h-screen">
-        <div className="flex-1 overflow-y-auto">{renderContent()}</div>
-      </div>
+    <div className="w-full min-h-screen bg-slate-50 flex flex-col">
+      <div className="flex-1 overflow-y-auto">{renderContent()}</div>
     </div>
   );
 };

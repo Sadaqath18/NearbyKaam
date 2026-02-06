@@ -111,6 +111,8 @@ export const generateMockJobs = (): Job[] => {
           salaryAmount: `${400 + Math.floor(Math.random() * 800)}`,
           salaryType: Math.random() > 0.5 ? "DAY" : "MONTH",
 
+          minExperienceYears: rand([0, 1, 3]),
+
           status: "APPROVED",
           isLive: true,
           isVerified: true,

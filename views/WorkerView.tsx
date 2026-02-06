@@ -80,6 +80,18 @@ const WorkerView: React.FC<WorkerViewProps> = ({
   const [showAuthPrompt, setShowAuthPrompt] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
 
+  const isWorkerProfileComplete = (p: WorkerProfile | null) => {
+    if (!p) return false;
+
+    return (
+      p.name?.trim() &&
+      p.preferredJobTitle?.trim() &&
+      p.jobType &&
+      p.expectedSalary &&
+      p.experienceYears !== undefined
+    );
+  };
+
   const [userLocation, setUserLocation] = useState<Location | null>(() => {
     const saved = localStorage.getItem("nearbykaam_loc");
     return saved ? JSON.parse(saved) : null;
@@ -110,9 +122,12 @@ const WorkerView: React.FC<WorkerViewProps> = ({
     return (
       profile.name?.trim() &&
       profile.preferredJobTitle?.trim() &&
-      profile.jobType
+      profile.jobType &&
+      profile.expectedSalary &&
+      profile.experienceYears !== undefined
     );
   };
+
   const [hasSkippedProfile, setHasSkippedProfile] = useState(false);
 
   const [profile, setProfile] = useState<WorkerProfile>(() => {
@@ -315,17 +330,17 @@ const WorkerView: React.FC<WorkerViewProps> = ({
     }
 
     if (selectedExperience !== "All") {
-      list = list.filter((j) => {
-        if (!j.experienceLevel) return false;
-        if (selectedExperience === "Entry Level") {
-          return ["Entry Level", "Fresher", "No Experience"].includes(
-            j.experienceLevel,
-          );
-        }
-        if (selectedExperience === "3+ Years") {
-          return ["3+ Years", "Senior", "5+ Years"].includes(j.experienceLevel);
-        }
-        return j.experienceLevel === selectedExperience;
+      list = list.filter((job) => {
+        if (selectedExperience === "Entry Level")
+          return job.minExperienceYears === 0;
+
+        if (selectedExperience === "1-2 Years")
+          return job.minExperienceYears >= 1 && job.minExperienceYears < 3;
+
+        if (selectedExperience === "3+ Years")
+          return job.minExperienceYears >= 3;
+
+        return true;
       });
     }
 
@@ -517,11 +532,12 @@ const WorkerView: React.FC<WorkerViewProps> = ({
     >
       {/* PROFILE DRAWER */}
       <WorkerProfileDrawer
-        isOpen={isProfileOpen}
+        isOpen={isProfileOpen || mustCompleteProfile}
         profile={profile}
         onSave={handleSaveProfile}
         onChangeLanguage={onChangeLanguage}
         forceComplete={mustCompleteProfile}
+        isMandatory={mustCompleteProfile}
         onExitRequest={() => setShowExitConfirm(true)} // forced flow
         onClose={() => setIsProfileOpen(false)} // normal close
       />
@@ -984,7 +1000,8 @@ const WorkerView: React.FC<WorkerViewProps> = ({
             </h2>
 
             <p className="text-xs font-medium text-slate-500 leading-relaxed mb-8">
-              Please sign in to complete your profile and apply for jobs.
+              Please sign in as Worker to complete your profile and apply for
+              jobs.
             </p>
 
             <div className="flex flex-col gap-3">

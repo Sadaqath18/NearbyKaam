@@ -4,9 +4,17 @@ import { getJobStatusMeta } from "../utils/jobStatusMeta";
 interface Props {
   job: Job;
   onBack: () => void;
+
+  onEdit: (job: Job) => void;
+  onDeleteJob: (id: string) => void;
 }
 
-const EmployerJobDetail: React.FC<Props> = ({ job, onBack }) => {
+const EmployerJobDetail: React.FC<Props> = ({
+  job,
+  onBack,
+  onEdit,
+  onDeleteJob,
+}) => {
   const status = getJobStatusMeta(job.status);
 
   return (
@@ -22,6 +30,30 @@ const EmployerJobDetail: React.FC<Props> = ({ job, onBack }) => {
           <i className="fa-solid fa-arrow-left"></i>
         </button>
         <h2 className="text-lg font-black">Job Details</h2>
+
+        <div className="flex gap-3 mt-6">
+          {/* EDIT */}
+          <button
+            onClick={() => onEdit(job)}
+            className="flex-1 bg-indigo-600 text-white py-3 rounded-xl font-bold"
+          >
+            Edit Job
+          </button>
+
+          {/* DELETE */}
+          <button
+            title="Delete"
+            onClick={(e) => {
+              e.stopPropagation();
+
+              const ok = confirm("Delete this job permanently?");
+              if (ok) onDeleteJob(job.id);
+            }}
+            className="px-4 bg-red-50 text-red-600 rounded-x1 font-bold"
+          >
+            <i className="fa-solid fa-trash"></i>
+          </button>
+        </div>
       </div>
 
       {/* Content */}

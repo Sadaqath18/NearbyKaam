@@ -74,6 +74,8 @@ export interface Job {
   salaryType: SalaryType;
   isVerified: boolean;
 
+  minExperienceYears?: number;
+
   isPromoted?: boolean;
   promotionRadiusKm?: number;
   promotionExpiresAt?: string;
@@ -99,7 +101,6 @@ export interface Job {
   expiryDays: number;
 
   adminNote?: string;
-  experienceLevel?: string;
   employmentType?: string;
   workMode?: string;
 }
@@ -177,6 +178,7 @@ export interface WorkerProfile {
   preferredJobTitle: string;
   expectedSalary?: number;
   expectedSalaryType?: "DAILY" | "MONTHLY";
+  experienceYears?: number;
 
   location: Location | null;
   resume: WorkerResume;

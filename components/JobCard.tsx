@@ -262,6 +262,15 @@ const JobCard: React.FC<JobCardProps> = ({
               <span className="text-[8px] font-bold text-slate-300 uppercase tracking-widest">
                 • {getTimeAgo(job.createdAt)}
               </span>
+              {job.minExperienceYears !== undefined && (
+                <span className="px-3 py-1 bg-orange-50 text-orange-600 rounded-lg text-[9px] font-black uppercase">
+                  {job.minExperienceYears === 0
+                    ? "Entry"
+                    : job.minExperienceYears === 3
+                      ? "3+ yrs"
+                      : "1–2 yrs"}
+                </span>
+              )}
             </div>
 
             {!isGuest && isPromotionActive(job) && job.promotionExpiresAt && (
@@ -331,7 +340,11 @@ const JobCard: React.FC<JobCardProps> = ({
                   Experience
                 </p>
                 <p className="text-[10px] font-bold text-slate-700">
-                  {job.experienceLevel || "Entry Level"}
+                  {job.minExperienceYears === 0
+                    ? "Entry Level"
+                    : job.minExperienceYears === 3
+                      ? "3+ Years"
+                      : "1–2 Years"}
                 </p>
               </div>
             </div>
@@ -339,9 +352,14 @@ const JobCard: React.FC<JobCardProps> = ({
             <div className="grid grid-cols-3 gap-2 pt-3">
               {/* CALL */}
               <button
-                title="Call the employer"
+                title={isGuest ? "Login required" : "Call the employer"}
                 onClick={handleCall}
-                className="bg-slate-900 text-white py-4 rounded-2xl text-xs font-black flex flex-col items-center justify-center gap-1 active:scale-95 transition-all"
+                className={`py-4 rounded-2xl text-xs font-black flex flex-col items-center justify-center gap-1 transition-all
+    ${
+      isGuest
+        ? "bg-slate-400 text-white opacity-50 blur-[1px] cursor-not-allowed"
+        : "bg-slate-900 text-white active:scale-95"
+    }`}
               >
                 <i className="fa-solid fa-phone-volume text-lg text-indigo-400"></i>
                 <span className="text-[11px] uppercase tracking-widest">
@@ -351,9 +369,14 @@ const JobCard: React.FC<JobCardProps> = ({
 
               {/* WHATSAPP */}
               <button
-                title="Chat on WhatsApp"
+                title={isGuest ? "Login required" : "Chat on WhatsApp"}
                 onClick={handleWhatsApp}
-                className="bg-emerald-500 text-white py-4 rounded-2xl text-xs font-black flex flex-col items-center justify-center gap-1 active:scale-95 transition-all shadow-lg shadow-emerald-100"
+                className={`py-4 rounded-2xl text-xs font-black flex flex-col items-center justify-center gap-1 transition-all
+    ${
+      isGuest
+        ? "bg-emerald-300 text-white opacity-50 blur-[1px] cursor-not-allowed"
+        : "bg-emerald-500 shadow-lg shadow-emerald-100 active:scale-95"
+    }`}
               >
                 <i className="fa-brands fa-whatsapp text-xl"></i>
                 <span className="text-[11px] uppercase tracking-widest">

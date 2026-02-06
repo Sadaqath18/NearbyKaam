@@ -79,6 +79,8 @@ export const generateMockWorkers = (count = 150): WorkerProfile[] => {
       expectedSalary: 12000 + Math.floor(Math.random() * 15000),
       expectedSalaryType: Math.random() > 0.5 ? "MONTHLY" : "DAILY",
 
+      experienceYears: rand([0, 1, , 3]),
+
       location: {
         lat: 12 + Math.random(),
         lng: 77 + Math.random(),
