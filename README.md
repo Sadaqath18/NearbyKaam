@@ -1,352 +1,236 @@
-🚀 NearbyKaam – Hyperlocal Job & Worker Matching Platform
+# 🚀 NearbyKaam – Hyperlocal Job & Worker Matching Platform
 
-A mobile-first job marketplace that connects local employers and nearby workers instantly.
+NearbyKaam is a **mobile-first hyperlocal job marketplace** that instantly connects **local employers** with **nearby workers**.
 
-Employers can post jobs, promote listings, and contact workers, while workers can discover jobs using filters, voice search, distance, and profile matching.
+It is designed for **fast, local hiring**, especially for **India-first, low-tech accessibility use cases**, supporting **voice search, distance-based matching**, and **audio resumes**.
 
-Built with React + TypeScript + Tailwind, optimized for low-end devices + fast local hiring.
+---
 
-✨ Features
-👷 Worker Side
+## 🌐 Live Deployment
 
-Browse jobs by category
+🔗 **Live App:** https://nearbykaam.vercel.app  
 
-Distance-based filtering (GPS)
+---
 
-Voice search (multi-language)
+## 🧠 Introduction
 
-Experience filters
+**NearbyKaam** bridges the gap between **local employers** and **nearby workers** using:
 
-Promoted jobs near you
+- GPS-based discovery
+- Voice-first job search
+- Smart filtering & sorting
+- Audio resumes
+- WhatsApp & call-based contact
 
-Profile + resume upload
+The platform is optimized for **low-end devices**, **fast load times**, and **real-world hiring workflows**.
 
-Audio resume support
+---
 
-Call & WhatsApp contact
+## ✨ Key Features
 
-🧑‍💼 Employer Side
+### 👷 Worker Side Features
 
-Post jobs with OTP verification
+<details> <summary><strong>Worker Capabilities</strong></summary>
+- Browse jobs by category  
+- Distance-based filtering (GPS)  
+- Voice search (multi-language)  
+- Experience-based filtering  
+- Promoted jobs near you  
+- Profile & resume upload  
+- 🎙 Audio resume support  
+- 📞 Call & 💬 WhatsApp contact  
+</details>
 
-Add shop photo
+----
 
-Contact tracking (calls/WhatsApp count)
+### 🧑‍💼 Employer Side Features
 
-Promote jobs with radius targeting
+<details> <summary><strong>Employer Capabilities</strong></summary>
+- Post jobs with OTP verification  
+- Upload shop photo  
+- Track calls & WhatsApp clicks  
+- Promote jobs with radius targeting  
+- View matching workers  
+- Play worker audio resumes  
+- Persistent employer profile  
+</details>
 
-View matching workers
+---
 
-Audio resume playback
+### ⚙️ System Features
 
-Employer profile persistence
+<details> <summary><strong>Platform Capabilities</strong></summary>
+- Mobile-first responsive UI  
+- Offline mock data support  
+- LocalStorage persistence  
+- Multi-language support  
+- Smart job sorting  
+- Clean, modular architecture  
+</details>
 
-⚙️ System Features
+---
 
-Mobile-first responsive UI
+## 🎙 Voice Search System
 
-Offline mock data support
+<details>
+<summary><strong>How Voice Search Works</strong></summary>
 
-LocalStorage persistence
-
-Multi-language support
-
-Smart job sorting (distance + verified + newest)
-
-Clean modular architecture
-
-🛠 Tech Stack
-Layer	Tech
-Frontend	React + TypeScript + Vite
-Styling	Tailwind CSS
-State	React Hooks
-Voice	Web Speech API
-AI Parsing	Google Gemini API
-Storage	LocalStorage
-Deployment	Vercel
-📂 Project Structure
-src/
- ├── components/      # UI components (cards, drawers, grids)
- ├── views/           # WorkerView, EmployerView
- ├── services/        # Gemini, promotions, utils
- ├── constants/       # Mock data & static configs
- ├── context/         # Language context
- ├── types/           # TypeScript interfaces
- ├── utils/           # Helpers & filters
-
-🧠 Architecture Overview
-User → View (Worker/Employer)
-        ↓
-    Filters/Voice/Location
-        ↓
-   Processed Jobs (useMemo)
-        ↓
-   Cards / Matching / Promotions
-
-🚀 Getting Started
-1️⃣ Install
-npm install
-
-2️⃣ Run
-npm run dev
+### 🔄 Flow
+Speech → Text → Gemini API → Filters → UI Update
 
 
-Open:
+### 🧠 Explanation
 
-http://localhost:3000
+1. **Speech Recognition**
+   - Uses the **Web Speech API** to convert user voice into text.
 
-3️⃣ Build
-npm run build
+2. **Intent Parsing**
+   - The transcribed text is sent to **Google Gemini API**.
+   - Gemini extracts:
+     - Job category
+     - Experience level
+     - Keywords
 
-⚙️ Environment Variables
+3. **Filter Application**
+   - Parsed intent dynamically updates job filters.
 
-Create .env:
+4. **UI Refresh**
+   - Job list updates instantly without page reload.
 
-VITE_GEMINI_API_KEY=your_api_key_here
+### 📁 Key Files
 
-
-Used for:
-
-Voice → Job search parsing
-
-Location geocoding
-
-📱 Views Explained
-<details> <summary>👷 Worker Flow</summary>
-Steps
-
-Select category
-
-Jobs filtered by:
-
-distance
-
-category
-
-experience
-
-keyword
-
-Sort priority:
-
-nearest
-
-verified
-
-latest
-
-Key Files
-
-WorkerView.tsx
-
-JobCard.tsx
-
-CategoryGrid.tsx
+- `geminiService.ts`
+- `voiceCategoryMatcher.ts`
 
 </details>
-<details> <summary>🧑‍💼 Employer Flow</summary>
-Steps
 
-Complete profile
+---
 
-Post job
+## 📢 Promotions System
 
-OTP verify
+<details>
+<summary><strong>Employer Promotions Flow</strong></summary>
 
-Job → Pending approval
+### 👨‍💼 Employer Can
 
-Promote job
+- Buy promotion plans  
+- Set targeting radius  
+- Define promotion expiry  
 
-View matching workers
+### ⚙️ Promotion Logic
 
-Key Files
-
-EmployerView.tsx
-
-EmployerProfileDrawer.tsx
-
-MatchingWorkersView.tsx
-
-PromoteJobView.tsx
-
-</details>
-<details> <summary>🎙 Voice Search System</summary>
-
-Uses:
-
-Web Speech API → speech to text
-
-Gemini API → parse intent
-
-Flow:
-
-speech → text → Gemini → filters → update UI
-
-
-Files:
-
-geminiService.ts
-
-voiceCategoryMatcher.ts
-
-</details>
-<details> <summary>📢 Promotions System</summary>
-
-Employers can:
-
-Buy plan
-
-Set radius
-
-Time-based expiry
-
-Logic:
-
+```ts
 job.isPromoted = true
 promotion.radiusKm
 promotion.expiresAt
+```
 
+### 👷 Worker Sees
 
-Workers see:
+Dedicated “Promoted Jobs Near You” section
 
-“Promoted Jobs Near You” section
+Jobs shown based on:
 
-Files:
+- Distance
+- Active promotion
+- Expiry time
 
-promotionPlanService.ts
+### 📁 Key Files
 
-EmployerPromoteView.tsx
-
-</details>
-<details> <summary>📦 Mock Data System (Development)</summary>
-
-No backend required.
-
-Includes:
-
-150 mock workers
-
-Jobs across all categories
-
-Random salary/location
-
-Files:
-
-mockWorkers.ts
-
-mockJobs.ts
+ promotionPlanService.ts
+- EmployerPromoteView.tsx
 
 </details>
-🧩 Core Concepts Used
-React
 
-Hooks
+---
+## 🛠 Tech Stack
 
-useMemo
+| Layer        | Technology |
+|-------------|------------|
+| Frontend    | React + TypeScript + Vite |
+| Styling     | Tailwind CSS |
+| State       | React Hooks |
+| Voice       | Web Speech API |
+| AI Parsing  | Google Gemini API |
+| Storage     | LocalStorage |
+| Deployment  | Vercel |
 
-useEffect
+---
 
-Context API
+## 📂 Project Structure
 
-Browser APIs
+```bash
+src/
+ ├── components/      # UI components (cards, drawers, grids)
+ ├── views/           # WorkerView, EmployerView
+ ├── services/        # Gemini, promotions, utilities
+ ├── constants/       # Mock data & static configs
+ ├── context/         # Language context
+ ├── types/           # TypeScript interfaces
+ └── utils/           # Helpers & filters
+```
 
-Geolocation
+__________
 
-SpeechRecognition
+## 🚀 Getting Started
 
-Audio playback
+### 1️⃣ Install Dependencies
+```bash
+npm install
+```
 
-Optimization
+### 2️⃣ Run Development Server
+```bash
+npm run dev
+```
+Open in browser:
+```bash
+http://localhost:3000
+```
 
-Memoized job filtering
-
-Lazy rendering
-
-Mobile-first layout
-
-🎯 Key Functional Logic
-Job Filtering
-jobs
- → approved
- → live
- → category
- → distance
- → experience
- → search
- → sort
-
-Distance Calculation
-
-Haversine formula
-
-Audio Resume
-audioRef.current = new Audio(url)
-audio.play()
-
-🔥 Recent Improvements
-
-Fixed category filter bug (showing all jobs)
-
-Added WhatsApp contact
-
-Added promoted jobs
-
-Added audio resume playback
-
-Added complete mock workers/jobs
-
-Improved PC scrolling
-
-Fixed typing issues
-
-Cleaned unused variables
-
-Employer/worker flows stabilized
-
-🚀 Deployment
-Vercel
+### 3️⃣ Build for Production
+```bash
 npm run build
+```
 
+### ⚙️ Environment Variables
 
-Upload build or connect repo.
+Create a .env or .env.local file:
+```bash
+VITE_GEMINI_API_KEY=your_api_key_here
+```
 
-📸 Screens (Mobile-first UI)
+Used For:
 
-Category grid
+- Voice → Job search intent parsing
+- Location-based query understanding
+  
+______
 
-Job feed
+## ⭐ Why This Project Matters
 
-Worker cards
-
-Employer dashboard
-
-Promotions page
-
-👨‍💻 Author
-
-Sadaqath Ulla Qureshi
-Full-stack Developer
-Focus: React, TypeScript, Product UX
-
-⭐ Why This Project Matters
-
-This app solves:
+NearbyKaam solves:
 
 ✅ Local hiring
 ✅ Small business staffing
 ✅ Low-tech accessibility
-✅ Voice-first search
-✅ Hyperlocal discovery
+✅ Voice-first discovery
+✅ Hyperlocal job matching
 
-Designed for real-world India-first use cases.
+Built for real-world, India-first hiring needs.
 
-## Run Locally
+_________
 
-**Prerequisites:**  Node.js
+## 🛣 Roadmap & Future Enhancements
 
+Planned features and long-term improvements are documented here:
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+➡️ [View Future Enhancements](./FUTURE_ENHANCEMENTS.md)
+____
+
+## 👨‍💻 Author
+
+##  Sadaqath Ulla Qureshi
+Full-stack Developer
+Focus: React, TypeScript, Product UX
+______
